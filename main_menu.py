@@ -79,7 +79,7 @@ class MainMenu:
         title.pack(pady=5)
 
         # Hàng poster phim đang chiếu
-        lbl_now_post = tk.Label(parent, text="Phim đang chiếu (hôm nay)",
+        lbl_now_post = tk.Label(parent, text="Phim đang chiếu",
                                 bg="#444444", fg="white",
                                 font=("Arial", 12, "bold"))
         lbl_now_post.pack(anchor="w", padx=5, pady=(10, 0))
@@ -88,7 +88,7 @@ class MainMenu:
         self.row_now_posters.pack(fill=tk.X, padx=5, pady=(0, 10))
 
         # Hàng poster phim sắp chiếu
-        lbl_soon_post = tk.Label(parent, text="Phim sắp chiếu (sau hôm nay)",
+        lbl_soon_post = tk.Label(parent, text="Phim sắp chiếu",
                                  bg="#444444", fg="white",
                                  font=("Arial", 12, "bold"))
         lbl_soon_post.pack(anchor="w", padx=5, pady=(10, 0))
