@@ -20,7 +20,7 @@ class ShowtimeManager:
         
         tk.Label(left_panel, text="Toàn bộ", font=("Arial", 11, "bold"), bg="#f0f2f5", fg="#ff9800", anchor="w").pack(fill=tk.X, pady=5)
         
-        rooms = ["Phòng 1", "Phòng 2", "Phòng 3", "Phòng VIP"]
+        rooms = ["Rạp 1", "Rạp 2", "Rạp 3"]
         for room in rooms:
             tk.Label(left_panel, text=room, font=("Arial", 11), bg="#f0f2f5", fg="#333", anchor="w", cursor="hand2").pack(fill=tk.X, pady=5)
 

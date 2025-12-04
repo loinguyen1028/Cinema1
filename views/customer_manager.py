@@ -49,8 +49,7 @@ class CustomerManager:
         self.action_icons = "✏  🗑"
         data = [
             (1, "Nguyễn Văn A", "0900000001", "a@example.com", "20/05/1990", "1200", "Gold", "02/12/2025"),
-            (2, "Guest", "", "", "", "0", "Standard", "03/12/2025"),
-            (3, "Trần Thị B", "0912345678", "tranthib@gmail.com", "15/08/1998", "540", "Silver", "04/12/2025"),
+            (2, "Trần Thị B", "0912345678", "tranthib@gmail.com", "15/08/1998", "540", "Silver", "04/12/2025"),
         ]
         
         for item in data:

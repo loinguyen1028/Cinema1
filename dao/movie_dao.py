@@ -4,35 +4,42 @@ from models import Movie
 
 class MovieDAO:
     def get_all_movies(self):
-        """Lấy danh sách tất cả phim"""
         session = db.get_session()
         try:
-            # Sắp xếp theo ID giảm dần để phim mới nhất lên đầu
             movies = session.query(Movie).order_by(Movie.movie_id.desc()).all()
             return movies
-        except SQLAlchemyError as e:
-            print(f"Lỗi lấy danh sách phim: {e}")
+        except SQLAlchemyError:
             return []
         finally:
             session.close()
 
+    def search_movies(self, keyword):
+        session = db.get_session()
+        try:
+            movies = session.query(Movie).filter(Movie.title.ilike(f"%{keyword}%")).order_by(Movie.movie_id.desc()).all()
+            return movies
+        except SQLAlchemyError:
+            return []
+        finally:
+            session.close()
+
+    # --- CẬP NHẬT HÀM THÊM: Nhận poster_path ---
     def add_movie(self, title, duration, country, genre, actors, language, age_limit, description="", poster_path=""):
         session = db.get_session()
         try:
-            # Lưu tất cả thông tin phụ vào JSON
             info_json = {
                 "genre": genre,
                 "country": country,
-                "actors": actors,       # Mới
-                "language": language,   # Mới (Vietsub/Lồng tiếng)
-                "age_limit": age_limit  # Mới (C13, C16...)
+                "actors": actors,       
+                "language": language,   
+                "age_limit": age_limit  
             }
 
             new_movie = Movie(
                 title=title,
                 duration_min=int(duration),
                 description=description,
-                poster_path=poster_path,
+                poster_path=poster_path, # <--- Lưu đường dẫn ảnh vào cột này
                 extra_info=info_json
             )
             session.add(new_movie)
@@ -45,7 +52,8 @@ class MovieDAO:
         finally:
             session.close()
 
-    def update_movie(self, movie_id, title, duration, country, genre, actors, language, age_limit, description=""):
+    # --- CẬP NHẬT HÀM SỬA: Nhận poster_path ---
+    def update_movie(self, movie_id, title, duration, country, genre, actors, language, age_limit, description="", poster_path=""):
         session = db.get_session()
         try:
             movie = session.query(Movie).get(movie_id)
@@ -54,14 +62,18 @@ class MovieDAO:
                 movie.duration_min = int(duration)
                 movie.description = description
                 
-                # Update JSON an toàn
+                # Chỉ cập nhật poster_path nếu có đường dẫn mới được chọn
+                # (Nếu người dùng không chọn ảnh mới, giữ nguyên ảnh cũ)
+                if poster_path:
+                    movie.poster_path = poster_path
+
                 current_info = dict(movie.extra_info) if movie.extra_info else {}
                 
                 current_info["genre"] = genre
                 current_info["country"] = country
-                current_info["actors"] = actors       # Mới
-                current_info["language"] = language   # Mới
-                current_info["age_limit"] = age_limit # Mới
+                current_info["actors"] = actors       
+                current_info["language"] = language   
+                current_info["age_limit"] = age_limit 
                 
                 movie.extra_info = current_info
                 
@@ -76,7 +88,6 @@ class MovieDAO:
             session.close()
 
     def delete_movie(self, movie_id):
-        """Xóa phim theo ID"""
         session = db.get_session()
         try:
             movie = session.query(Movie).get(movie_id)
@@ -85,22 +96,24 @@ class MovieDAO:
                 session.commit()
                 return True
             return False
-        except SQLAlchemyError as e:
-            print(f"Lỗi xóa phim: {e}")
-            session.rollback() # Hoàn tác nếu lỗi (vd: phim đang có suất chiếu)
+        except SQLAlchemyError:
+            session.rollback()
             return False
         finally:
             session.close()
-
-    def search_movies(self, keyword):
-        """Tìm kiếm phim theo tên (không phân biệt hoa thường)"""
+    
+    def get_movie_by_id(self, movie_id):
+        """Lấy thông tin chi tiết 1 phim theo ID"""
         session = db.get_session()
         try:
-            # ilike tương đương với LIKE '%keyword%' nhưng không phân biệt hoa thường
-            movies = session.query(Movie).filter(Movie.title.ilike(f"%{keyword}%")).order_by(Movie.movie_id.desc()).all()
-            return movies
+            movie = session.query(Movie).get(movie_id)
+            # Truy cập các thuộc tính để nạp dữ liệu trước khi đóng session
+            if movie:
+                _ = movie.title 
+                _ = movie.extra_info
+            return movie
         except SQLAlchemyError as e:
-            print(f"Lỗi tìm kiếm phim: {e}")
-            return []
+            print(f"Lỗi lấy phim: {e}")
+            return None
         finally:
             session.close()

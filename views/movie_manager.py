@@ -1,6 +1,9 @@
 import tkinter as tk
 from tkinter import ttk
 from tkinter import messagebox
+from tkinter import filedialog
+import os # <--- IMPORT MỚI ĐỂ KIỂM TRA FILE
+from PIL import Image, ImageTk # <--- IMPORT QUAN TRỌNG ĐỂ XỬ LÝ ẢNH
 from dao.movie_dao import MovieDAO
 
 class MovieManager:
@@ -118,6 +121,9 @@ class MovieManager:
                             messagebox.showerror("Lỗi", "Không thể xóa.")
 
     # ---------------------------------------------------------
+    # DIALOG THÊM / SỬA PHIM (CÓ HIỂN THỊ ẢNH)
+    # ---------------------------------------------------------
+# ---------------------------------------------------------
     # DIALOG THÊM / SỬA PHIM
     # ---------------------------------------------------------
     def open_dialog(self, mode="add", movie_id=None):
@@ -128,6 +134,7 @@ class MovieManager:
         dialog.config(bg="#f5f6f8")
         dialog.grab_set()
 
+        # 1. Khởi tạo biến mặc định
         val_name = ""
         val_genre_str = ""
         val_actors = ""
@@ -136,14 +143,27 @@ class MovieManager:
         val_duration = ""
         val_country = "Mỹ"
         val_desc = ""
+        self.current_poster_path = "" # Reset đường dẫn ảnh
 
+        # 2. Nếu là Edit -> Gọi DB lấy dữ liệu chuẩn xác
         if mode == "edit" and movie_id:
-            curr_vals = self.tree.item(movie_id, "values") 
-            val_name = curr_vals[1]
-            val_genre_str = curr_vals[2]
-            val_actors = curr_vals[3]
-            val_age = curr_vals[4]
-            val_duration = curr_vals[5]
+            movie = self.movie_dao.get_movie_by_id(movie_id)
+            if movie:
+                val_name = movie.title
+                val_duration = str(movie.duration_min)
+                val_desc = movie.description if movie.description else ""
+                
+                # Lấy đường dẫn ảnh từ DB
+                if movie.poster_path:
+                    self.current_poster_path = movie.poster_path
+
+                # Lấy thông tin từ JSON
+                extra = movie.extra_info if movie.extra_info else {}
+                val_genre_str = extra.get('genre', '')
+                val_country = extra.get('country', 'Mỹ')
+                val_actors = extra.get('actors', '')
+                val_lang = extra.get('language', 'Lồng tiếng')
+                val_age = extra.get('age_limit', '16')
 
         container = tk.Frame(dialog, bg="#f5f6f8", padx=30, pady=20)
         container.pack(fill=tk.BOTH, expand=True)
@@ -169,22 +189,14 @@ class MovieManager:
         curr_genres = [g.strip() for g in val_genre_str.split(",")]
         for item in genres_list:
             lb_genre.insert(tk.END, item)
-            if item in curr_genres:
-                lb_genre.selection_set(tk.END)
+            if item in curr_genres: lb_genre.selection_set(tk.END)
 
         # --- ROW 2: Diễn viên & (Thời lượng + Quốc gia) ---
         row2 = tk.Frame(container, bg="#f5f6f8"); row2.pack(fill=tk.X, pady=10)
-        
         e_actors = self.create_input(row2, "Diễn viên", val_actors, side=tk.LEFT)
         
-        # Phần bên phải Row 2: Chứa Thời lượng và Quốc gia
-        right_row2 = tk.Frame(row2, bg="#f5f6f8")
-        right_row2.pack(side=tk.RIGHT, padx=(20, 0))
-        
-        # 1. Thời lượng (ĐÃ SỬA: Thêm vào đây)
+        right_row2 = tk.Frame(row2, bg="#f5f6f8"); right_row2.pack(side=tk.RIGHT, padx=(20, 0))
         e_duration = self.create_input(right_row2, "Thời lượng (phút)", val_duration, side=tk.LEFT, width=15)
-        
-        # 2. Quốc gia
         cbo_country = self.create_combo(right_row2, "Quốc gia", val_country, ["Việt Nam", "Mỹ", "Hàn Quốc", "Thái Lan"], side=tk.LEFT, width=18)
 
         # --- ROW 3: Hình thức & Giới hạn tuổi ---
@@ -205,11 +217,47 @@ class MovieManager:
 
         right_col = tk.Frame(row4, bg="#f5f6f8", width=200)
         right_col.pack(side=tk.RIGHT, fill=tk.Y, padx=(20, 0))
+        
+        # Khung chứa Poster
         poster_frame = tk.Frame(right_col, bg="#ddd", height=150, width=120)
         poster_frame.pack(anchor="n", pady=(20, 5))
         poster_frame.pack_propagate(False)
-        tk.Label(poster_frame, text="[ POSTER ]", bg="#ddd", fg="#666").pack(expand=True)
-        tk.Button(right_col, text="📂 Ảnh", bg="#1976d2", fg="white", relief="flat", font=("Arial", 9)).pack(anchor="n")
+        lbl_poster_display = tk.Label(poster_frame, text="[ POSTER ]", bg="#ddd", fg="#666")
+        lbl_poster_display.pack(expand=True, fill=tk.BOTH)
+
+        lbl_path_display = tk.Label(right_col, text="Chưa chọn ảnh", bg="#f5f6f8", fg="#666", font=("Arial", 8), wraplength=180)
+        lbl_path_display.pack(anchor="n", pady=(0, 5))
+
+        # Hàm hiển thị ảnh
+        def load_image_to_label(path):
+            if not path or not os.path.exists(path):
+                lbl_poster_display.config(image="", text="[ POSTER ]", bg="#ddd")
+                lbl_path_display.config(text="Chưa có ảnh" if not path else "File không tồn tại")
+                return
+            try:
+                img = Image.open(path)
+                img = img.resize((120, 150), Image.Resampling.LANCZOS)
+                img_tk = ImageTk.PhotoImage(img)
+                lbl_poster_display.config(image=img_tk, text="", bg="#f5f6f8")
+                lbl_poster_display.image = img_tk 
+                lbl_path_display.config(text=os.path.basename(path)) # Chỉ hiện tên file cho gọn
+            except Exception:
+                lbl_poster_display.config(image="", text="Lỗi ảnh")
+
+        # Hàm chọn file
+        def choose_image():
+            file_path = filedialog.askopenfilename(title="Chọn ảnh", filetypes=[("Image files", "*.jpg *.jpeg *.png")])
+            if file_path:
+                self.current_poster_path = file_path
+                load_image_to_label(file_path)
+
+        # Nút chọn ảnh
+        tk.Button(right_col, text="📂 Ảnh", bg="#1976d2", fg="white", relief="flat", font=("Arial", 9), 
+                  command=choose_image).pack(anchor="n")
+
+        # --- NẾU ĐANG SỬA VÀ CÓ ẢNH -> LOAD ẢNH LÊN ---
+        if mode == "edit" and self.current_poster_path:
+             load_image_to_label(self.current_poster_path)
 
         btn_save = tk.Button(right_col, text="Lưu", bg="#1976d2", fg="white", font=("Arial", 11, "bold"), 
                              width=15, relief="flat", command=lambda: save_action())
@@ -218,14 +266,13 @@ class MovieManager:
         # --- LOGIC LƯU ---
         def save_action():
             name = e_name.get().strip()
-            # Lấy dữ liệu từ ô Thời lượng
             dur = e_duration.get().strip()
-            
             cou = cbo_country.get()
             actors = e_actors.get().strip()
             lang = cbo_lang.get()
             age = cbo_age.get()
             desc = txt_desc.get("1.0", tk.END).strip()
+            poster = self.current_poster_path 
 
             selected_indices = lb_genre.curselection()
             selected_genres = [lb_genre.get(i) for i in selected_indices]
@@ -234,20 +281,15 @@ class MovieManager:
             if not name:
                 messagebox.showwarning("Thiếu thông tin", "Vui lòng nhập Tên phim!")
                 return
-            
-            if not dur:
-                messagebox.showwarning("Thiếu thông tin", "Vui lòng nhập Thời lượng!")
-                return
-
             if not dur.isdigit():
-                messagebox.showwarning("Lỗi", "Thời lượng phải là số nguyên (phút)!")
+                messagebox.showwarning("Lỗi", "Thời lượng phải là số nguyên!")
                 return
 
             if mode == "add":
-                success = self.movie_dao.add_movie(name, dur, cou, gen_str, actors, lang, age, desc)
+                success = self.movie_dao.add_movie(name, dur, cou, gen_str, actors, lang, age, desc, poster)
                 msg = "Thêm mới"
             else:
-                success = self.movie_dao.update_movie(movie_id, name, dur, cou, gen_str, actors, lang, age, desc)
+                success = self.movie_dao.update_movie(movie_id, name, dur, cou, gen_str, actors, lang, age, desc, poster)
                 msg = "Cập nhật"
 
             if success:
@@ -261,7 +303,7 @@ class MovieManager:
     def create_input(self, parent, label, val, side, width=None):
         f = tk.Frame(parent, bg="#f5f6f8")
         f.pack(side=side, fill=tk.X, expand=(width is None))
-        if width: f.config(width=width) # Bỏ pack_propagate để nó co giãn đẹp hơn với width nhỏ
+        if width: f.config(width=width)
         tk.Label(f, text=label, bg="#f5f6f8", fg="#555", font=("Arial", 9)).pack(anchor="w")
         e = tk.Entry(f, font=("Arial", 11), relief="flat", highlightthickness=1, highlightbackground="#ccc", width=width)
         e.insert(0, str(val))
