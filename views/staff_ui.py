@@ -61,7 +61,7 @@ class StaffApp:
         menu = tk.Menu(self.root, tearoff=0)
         
         # Thêm các mục
-        menu.add_command(label="Thông tin tài khoản", command=lambda: print("Xem info"))
+        # menu.add_command(label="Thông tin tài khoản", command=lambda: print("Xem info"))
         menu.add_separator() # Đường gạch ngang
         menu.add_command(label="Đăng xuất", command=self.on_logout, foreground="red") # Gọi hàm logout từ main.py
         
@@ -77,7 +77,7 @@ class StaffApp:
         logo_frame = tk.Frame(self.sidebar_frame, bg=self.colors["sidebar_bg"], height=80)
         logo_frame.pack(fill=tk.X, pady=20)
         tk.Label(logo_frame, text="🎬", font=("Arial", 30), bg=self.colors["sidebar_bg"], fg="#5c9aff").pack(side=tk.LEFT, padx=(20, 5))
-        tk.Label(logo_frame, text="Squadin\nCinema", font=("Arial", 16, "bold"), bg=self.colors["sidebar_bg"], fg="white", justify=tk.LEFT).pack(side=tk.LEFT)
+        tk.Label(logo_frame, text="LHQ\nCinema", font=("Arial", 16, "bold"), bg=self.colors["sidebar_bg"], fg="white", justify=tk.LEFT).pack(side=tk.LEFT)
 
         # Menu Items
         menu_items = [("Phim", "🎞"), ("Đồ ăn", "🍿"), ("Vé đã đặt", "🎟")]

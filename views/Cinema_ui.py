@@ -73,7 +73,7 @@ class CinemaApp:
         """Hiển thị menu Admin (Logout)"""
         menu = tk.Menu(self.root, tearoff=0)
         
-        menu.add_command(label="Cài đặt hệ thống")
+        # menu.add_command(label="Cài đặt hệ thống")
         menu.add_separator()
         # Gọi hàm self.on_logout khi bấm Đăng xuất
         menu.add_command(label="Đăng xuất", command=self.on_logout, foreground="red") 
@@ -87,7 +87,7 @@ class CinemaApp:
         logo_frame = tk.Frame(self.sidebar_frame, bg=self.colors["sidebar_bg"], height=80)
         logo_frame.pack(fill=tk.X, pady=20)
         
-        tk.Label(logo_frame, text="▶", font=("Arial", 30), bg=self.colors["sidebar_bg"], fg="#5c9aff").pack(side=tk.LEFT, padx=(20, 5))
+        tk.Label(logo_frame, text="🎬", font=("Arial", 30), bg=self.colors["sidebar_bg"], fg="#5c9aff").pack(side=tk.LEFT, padx=(20, 5))
         tk.Label(logo_frame, text="LHQ\nCinema", font=("Arial", 16, "bold"), bg=self.colors["sidebar_bg"], fg="white", justify=tk.LEFT).pack(side=tk.LEFT)
 
         for name, icon in self.menu_data:
