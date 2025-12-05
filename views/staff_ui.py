@@ -110,7 +110,7 @@ class StaffApp:
             widget.destroy()
 
         if page_name == "Phim":
-            TicketBooking(self.body_frame)
+            TicketBooking(self.body_frame, user_id=self.user_id)
         elif page_name == "Khách hàng":
             CustomerManager(self.body_frame)
         else:

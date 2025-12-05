@@ -57,6 +57,7 @@ class LoginWindow:
         user = self.auth_dao.login(username, password)
 
         if user:
+            self.root.unbind('<Return>')
             # Đăng nhập thành công
             self.login_frame.destroy()
 

@@ -89,3 +89,55 @@ class CustomerDAO:
             return False
         finally:
             session.close()
+
+    def get_by_phone(self, phone):
+        """Tìm khách hàng theo SĐT"""
+        session = db.get_session()
+        try:
+            return session.query(Customer).filter_by(phone=phone).first()
+        finally:
+            session.close()
+
+    def update_membership(self, customer_id, amount_paid):
+        """
+        Cộng điểm và tự động cập nhật hạng thành viên
+        Quy tắc: 10,000 VND = 1 điểm
+        """
+        session = db.get_session()
+        try:
+            cus = session.query(Customer).get(customer_id)
+            if cus:
+                # 1. Tính điểm cộng thêm
+                points_added = int(amount_paid / 10000)
+
+                # 2. Lấy dữ liệu cũ
+                current_info = dict(cus.extra_info) if cus.extra_info else {}
+                current_points = current_info.get("points", 0)
+
+                # 3. Cộng dồn điểm
+                new_points = current_points + points_added
+
+                # 4. Logic thăng hạng (Level Up)
+                new_level = "Thân thiết"
+                if new_points >= 2000:
+                    new_level = "Kim cương"
+                elif new_points >= 1000:
+                    new_level = "Vàng"
+                elif new_points >= 500:
+                    new_level = "Bạc"
+
+                # Cập nhật vào JSON
+                current_info["points"] = new_points
+                current_info["level"] = new_level
+
+                cus.extra_info = current_info
+                session.commit()
+
+                return True, f"Cộng {points_added} điểm. Hạng hiện tại: {new_level}"
+            return False, "Không tìm thấy khách hàng"
+        except Exception as e:
+            session.rollback()
+            print(f"Lỗi update member: {e}")
+            return False, str(e)
+        finally:
+            session.close()
