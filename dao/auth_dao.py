@@ -17,3 +17,25 @@ class AuthDAO:
             return None
         finally:
             session.close()
+
+    def get_user_by_id(self, user_id):
+        session = db.get_session()
+        try:
+            return session.query(User).get(user_id)
+        finally:
+            session.close()
+
+    def change_password(self, user_id, new_password):
+        session = db.get_session()
+        try:
+            user = session.query(User).get(user_id)
+            if user:
+                user.password = new_password
+                session.commit()
+                return True
+            return False
+        except SQLAlchemyError:
+            session.rollback()
+            return False
+        finally:
+            session.close()
