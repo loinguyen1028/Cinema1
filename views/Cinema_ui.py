@@ -1,5 +1,6 @@
 import tkinter as tk
 from views.movie_manager import MovieManager
+from views.room_manager import RoomManager
 from views.showtime_manager import ShowtimeManager
 from views.staff_manager import StaffManager
 from views.customer_manager import CustomerManager
@@ -38,14 +39,14 @@ class CinemaApp:
         self.menu_data = [
             ("Quản lí phim", "🎬"),
             ("Quản lí suất chiếu", "🎞"),
-            ("Quản lí sản phẩm", "🥤"),
+            ("Quản lí phòng chiếu", "🏢"),  # Thêm mục quản lý phòng chiếu
             ("Quản lí nhân sự", "👥"),
             ("Quản lí khách hàng", "👨‍👩‍👧"),
             ("Thống kê", "📊"),
             ("Voucher", "🎟")
         ]
-        
-        self.menu_buttons = {} 
+
+        self.menu_buttons = {}
         self.create_sidebar()
         
         # Mặc định vào trang Movie
@@ -118,6 +119,8 @@ class CinemaApp:
             MovieManager(self.body_frame)
         elif page_name == "Quản lí suất chiếu": 
             ShowtimeManager(self.body_frame)
+        elif page_name == "Quản lí phòng chiếu":
+            RoomManager(self.body_frame)
         elif page_name == "Quản lí nhân sự":
             StaffManager(self.body_frame)
         elif page_name == "Quản lí khách hàng":
