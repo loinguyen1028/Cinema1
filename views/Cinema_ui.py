@@ -6,7 +6,7 @@ from views.staff_manager import StaffManager
 from views.customer_manager import CustomerManager
 from views.room_manager import RoomManager
 from views.change_password_dialog import ChangePasswordDialog
-
+from views.product_manager import ProductManager
 
 class CinemaApp:
     # --- SỬA DÒNG NÀY: Thêm tham số user_id ---
@@ -123,6 +123,8 @@ class CinemaApp:
             ShowtimeManager(self.body_frame)
         elif page_name == "Quản lí phòng chiếu":
             RoomManager(self.body_frame)
+        elif page_name == "Quản lí sản phẩm":
+            ProductManager(self.body_frame)
         elif page_name == "Quản lí nhân sự":
             StaffManager(self.body_frame)
         elif page_name == "Quản lí khách hàng":

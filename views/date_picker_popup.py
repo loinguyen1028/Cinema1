@@ -55,7 +55,7 @@ class DatePickerPopup:
             x = self.parent.winfo_pointerx()
             y = self.parent.winfo_pointery()
 
-        self.window.geometry(f"+{x}+{y}")
+        self.window.geometry(f"+{x - 350}+{y}")
 
         # --- XỬ LÝ NGÀY MẶC ĐỊNH ---
         try:

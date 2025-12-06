@@ -4,6 +4,7 @@ from sqlalchemy.dialects.postgresql import JSONB
 from datetime import datetime
 from .base import Base
 
+
 class Customer(Base):
     __tablename__ = 'customers'
     customer_id = Column(Integer, primary_key=True)
@@ -14,6 +15,7 @@ class Customer(Base):
     extra_info = Column(JSONB)
 
     tickets = relationship("Ticket", back_populates="customer")
+
 
 class Ticket(Base):
     __tablename__ = 'tickets'
@@ -28,7 +30,13 @@ class Ticket(Base):
     showtime = relationship("Showtime", back_populates="tickets")
     customer = relationship("Customer", back_populates="tickets")
     user = relationship("User", back_populates="sales")
+
+    # Quan hệ với ghế (1 vé có nhiều ghế)
     ticket_seats = relationship("TicketSeat", back_populates="ticket", cascade="all, delete-orphan")
+
+    # --- ĐÚNG: Quan hệ với sản phẩm nằm ở đây ---
+    ticket_products = relationship("TicketProduct", back_populates="ticket", cascade="all, delete-orphan")
+
 
 class TicketSeat(Base):
     __tablename__ = 'ticket_seats'
@@ -39,4 +47,20 @@ class TicketSeat(Base):
 
     ticket = relationship("Ticket", back_populates="ticket_seats")
     seat = relationship("Seat")
+
+    # LƯU Ý: KHÔNG ĐƯỢC CÓ 'ticket_products' Ở ĐÂY
+
     __table_args__ = (UniqueConstraint('ticket_id', 'seat_id', name='uix_ticket_seat'),)
+
+
+class TicketProduct(Base):
+    __tablename__ = 'ticket_products'
+
+    id = Column(Integer, primary_key=True)
+    ticket_id = Column(Integer, ForeignKey('tickets.ticket_id', ondelete='CASCADE'), nullable=False)
+    product_id = Column(Integer, ForeignKey('products.product_id'), nullable=False)
+    quantity = Column(Integer, nullable=False, default=1)
+    price_at_purchase = Column(Numeric(10, 2), nullable=False)
+
+    ticket = relationship("Ticket", back_populates="ticket_products")
+    product = relationship("Product", back_populates="ticket_products")
