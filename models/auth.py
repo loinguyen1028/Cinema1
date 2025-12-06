@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy import Column, Integer, String, ForeignKey, Boolean
 from sqlalchemy.orm import relationship
 from .base import Base 
 from sqlalchemy.dialects.postgresql import JSONB
@@ -20,6 +20,7 @@ class User(Base):
     role_id = Column(Integer, ForeignKey('roles.role_id'), nullable=False)
 
     extra_info = Column(JSONB)
+    is_active = Column(Boolean, default=True)
 
     role = relationship("Role", back_populates="users")
     sales = relationship("Ticket", back_populates="user")

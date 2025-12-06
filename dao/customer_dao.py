@@ -1,24 +1,27 @@
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.exc import SQLAlchemyError, IntegrityError, DataError, OperationalError
 from db import db
 from models import Customer
 
 
 class CustomerDAO:
+    # -----------------------------------------------------
+    # CÁC HÀM LẤY DỮ LIỆU (GET)
+    # -----------------------------------------------------
     def get_all(self):
         session = db.get_session()
         try:
-            return session.query(Customer).order_by(Customer.customer_id.desc()).all()
+            return session.query(Customer).filter_by(is_active=True).order_by(Customer.customer_id.desc()).all()
+        except Exception:
+            return []
         finally:
             session.close()
 
-    def search(self, keyword):
+    def get_by_phone(self, phone):
         session = db.get_session()
         try:
-            # Tìm theo Tên hoặc Số điện thoại
-            return session.query(Customer).filter(
-                (Customer.name.ilike(f"%{keyword}%")) |
-                (Customer.phone.ilike(f"%{keyword}%"))
-            ).order_by(Customer.customer_id.desc()).all()
+            return session.query(Customer).filter_by(phone=phone).first()
+        except Exception:
+            return None
         finally:
             session.close()
 
@@ -26,26 +29,63 @@ class CustomerDAO:
         session = db.get_session()
         try:
             return session.query(Customer).get(customer_id)
+        except Exception:
+            return None
         finally:
             session.close()
 
+    def search(self, keyword):
+        session = db.get_session()
+        try:
+            return session.query(Customer).filter(
+                (Customer.name.ilike(f"%{keyword}%")) |
+                (Customer.phone.ilike(f"%{keyword}%"))
+            ).filter_by(is_active=True).all()
+        except Exception:
+            return []
+        finally:
+            session.close()
+
+    # -----------------------------------------------------
+    # CÁC HÀM TÁC ĐỘNG DỮ LIỆU (ADD / UPDATE / DELETE)
+    # -----------------------------------------------------
     def add(self, name, phone, email, dob, points, level):
         session = db.get_session()
         try:
-            # Gom thông tin phụ vào JSON
-            info = {
+            # 1. Chuẩn bị dữ liệu
+            extra = {
                 "dob": dob,
-                "points": int(points) if points else 0,
+                "points": int(points) if str(points).isdigit() else 0,
                 "level": level
             }
-            new_cus = Customer(name=name, phone=phone, email=email, extra_info=info)
+
+            new_cus = Customer(name=name, phone=phone, email=email, extra_info=extra)
             session.add(new_cus)
             session.commit()
-            return True
-        except SQLAlchemyError as e:
-            print(f"Lỗi thêm khách hàng: {e}")
+
+            return True, "Thêm khách hàng thành công!"
+
+        except IntegrityError as e:
             session.rollback()
-            return False
+            # Phân tích lỗi để báo chính xác hơn
+            err_msg = str(e).lower()
+            if "phone" in err_msg:
+                return False, f"Số điện thoại {phone} đã tồn tại trong hệ thống!"
+            if "email" in err_msg:
+                return False, f"Email {email} đã được sử dụng!"
+            return False, "Dữ liệu bị trùng lặp (SĐT hoặc Email)!"
+
+        except DataError:
+            session.rollback()
+            return False, "Dữ liệu quá dài hoặc sai định dạng!"
+
+        except OperationalError:
+            session.rollback()
+            return False, "Lỗi kết nối cơ sở dữ liệu!"
+
+        except Exception as e:
+            session.rollback()
+            return False, f"Lỗi không xác định: {str(e)}"
         finally:
             session.close()
 
@@ -53,25 +93,38 @@ class CustomerDAO:
         session = db.get_session()
         try:
             cus = session.query(Customer).get(customer_id)
-            if cus:
-                cus.name = name
-                cus.phone = phone
-                cus.email = email
+            if not cus:
+                return False, "Không tìm thấy khách hàng cần sửa!"
 
-                # Update JSON
-                current_info = dict(cus.extra_info) if cus.extra_info else {}
-                current_info["dob"] = dob
-                current_info["points"] = int(points) if points else 0
-                current_info["level"] = level
-                cus.extra_info = current_info
+            # Cập nhật thông tin
+            cus.name = name
+            cus.phone = phone
+            cus.email = email
 
-                session.commit()
-                return True
-            return False
-        except SQLAlchemyError as e:
-            print(f"Lỗi sửa khách hàng: {e}")
+            # Cập nhật JSON an toàn
+            extra = dict(cus.extra_info) if cus.extra_info else {}
+            extra["dob"] = dob
+            extra["points"] = int(points) if str(points).isdigit() else 0
+            extra["level"] = level
+            cus.extra_info = extra
+
+            session.commit()
+            return True, "Cập nhật thành công!"
+
+        except IntegrityError as e:
             session.rollback()
-            return False
+            err_msg = str(e).lower()
+            if "phone" in err_msg:
+                return False, f"Số điện thoại {phone} đang thuộc về khách hàng khác!"
+            return False, "Thông tin trùng lặp với khách hàng khác!"
+
+        except DataError:
+            session.rollback()
+            return False, "Dữ liệu nhập vào không hợp lệ!"
+
+        except Exception as e:
+            session.rollback()
+            return False, f"Lỗi hệ thống: {str(e)}"
         finally:
             session.close()
 
@@ -79,45 +132,37 @@ class CustomerDAO:
         session = db.get_session()
         try:
             cus = session.query(Customer).get(customer_id)
-            if cus:
-                session.delete(cus)
-                session.commit()
-                return True
-            return False
-        except SQLAlchemyError:
+            if not cus:
+                return False, "Không tìm thấy khách hàng!"
+
+            # Xóa mềm (Soft Delete)
+            cus.is_active = False
+            session.commit()
+            return True, "Đã xóa khách hàng thành công!"
+
+        except Exception as e:
             session.rollback()
-            return False
+            return False, f"Lỗi khi xóa: {str(e)}"
         finally:
             session.close()
 
-    def get_by_phone(self, phone):
-        """Tìm khách hàng theo SĐT"""
-        session = db.get_session()
-        try:
-            return session.query(Customer).filter_by(phone=phone).first()
-        finally:
-            session.close()
-
+    # -----------------------------------------------------
+    # CÁC HÀM NGHIỆP VỤ KHÁC (TÍCH ĐIỂM)
+    # -----------------------------------------------------
     def update_membership(self, customer_id, amount_paid):
-        """
-        Cộng điểm và tự động cập nhật hạng thành viên
-        Quy tắc: 10,000 VND = 1 điểm
-        """
         session = db.get_session()
         try:
             cus = session.query(Customer).get(customer_id)
             if cus:
-                # 1. Tính điểm cộng thêm
+                # 10k = 1 điểm
                 points_added = int(amount_paid / 10000)
 
-                # 2. Lấy dữ liệu cũ
                 current_info = dict(cus.extra_info) if cus.extra_info else {}
                 current_points = current_info.get("points", 0)
 
-                # 3. Cộng dồn điểm
                 new_points = current_points + points_added
 
-                # 4. Logic thăng hạng (Level Up)
+                # Logic thăng hạng
                 new_level = "Thân thiết"
                 if new_points >= 2000:
                     new_level = "Kim cương"
@@ -126,18 +171,40 @@ class CustomerDAO:
                 elif new_points >= 500:
                     new_level = "Bạc"
 
-                # Cập nhật vào JSON
                 current_info["points"] = new_points
                 current_info["level"] = new_level
 
                 cus.extra_info = current_info
                 session.commit()
-
-                return True, f"Cộng {points_added} điểm. Hạng hiện tại: {new_level}"
-            return False, "Không tìm thấy khách hàng"
+                return True, f"Cộng {points_added} điểm. Hạng: {new_level}"
+            return False, "Khách hàng không tồn tại"
         except Exception as e:
             session.rollback()
-            print(f"Lỗi update member: {e}")
+            return False, str(e)
+        finally:
+            session.close()
+
+    def deduct_points(self, customer_id, points_to_use):
+        session = db.get_session()
+        try:
+            cus = session.query(Customer).get(customer_id)
+            if not cus:
+                return False, "Không tìm thấy khách hàng"
+
+            current_info = dict(cus.extra_info) if cus.extra_info else {}
+            current_points = current_info.get("points", 0)
+
+            if current_points < points_to_use:
+                return False, f"Không đủ điểm (Có: {current_points})"
+
+            new_points = current_points - points_to_use
+            current_info["points"] = new_points
+            cus.extra_info = current_info
+
+            session.commit()
+            return True, f"Đã trừ {points_to_use} điểm"
+        except Exception as e:
+            session.rollback()
             return False, str(e)
         finally:
             session.close()

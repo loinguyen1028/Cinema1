@@ -50,10 +50,11 @@ class CustomerDialog(tk.Toplevel):
         self.e_dob.bind("<Button-1>", open_cal)
         tk.Label(f_dob, text="📅", bg="#f5f6f8").pack(side=tk.LEFT, padx=5)
 
-        # Điểm tích lũy & Hạng (Cùng 1 dòng)
+        # --- KHU VỰC ĐIỂM & HẠNG ---
         row_level = tk.Frame(container, bg="#f5f6f8")
         row_level.pack(fill=tk.X)
 
+        # 1. Điểm tích lũy
         f_points = tk.Frame(row_level, bg="#f5f6f8")
         f_points.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 10))
         tk.Label(f_points, text="Điểm tích lũy", bg="#f5f6f8", fg="#555").pack(anchor="w")
@@ -61,6 +62,7 @@ class CustomerDialog(tk.Toplevel):
         self.e_points.insert(0, "0")
         self.e_points.pack(fill=tk.X, ipady=4)
 
+        # 2. Hạng thành viên
         f_level = tk.Frame(row_level, bg="#f5f6f8")
         f_level.pack(side=tk.LEFT, fill=tk.X, expand=True)
         tk.Label(f_level, text="Hạng thành viên", bg="#f5f6f8", fg="#555").pack(anchor="w")
@@ -68,6 +70,12 @@ class CustomerDialog(tk.Toplevel):
                                       state="readonly")
         self.cbo_level.current(0)
         self.cbo_level.pack(fill=tk.X, ipady=4)
+
+        # --- XỬ LÝ KHÓA NHẬP LIỆU ---
+        # Nếu là thêm mới (add), khóa ô Điểm và Hạng lại
+        if self.mode == "add":
+            self.e_points.config(state='readonly')  # Chỉ đọc, không cho sửa
+            self.cbo_level.config(state='disabled')  # Không cho xổ xuống chọn
 
         # Nút Lưu
         tk.Button(container, text="Lưu", bg="#1976d2", fg="white", font=("Arial", 11, "bold"),
@@ -89,6 +97,8 @@ class CustomerDialog(tk.Toplevel):
             extra = cus.extra_info if cus.extra_info else {}
             self.e_dob.insert(0, extra.get("dob", ""))
 
+            # Khi sửa (Edit), ta cho phép sửa điểm để Admin điều chỉnh nếu cần
+            # (Hoặc nếu muốn khóa luôn thì thêm config state='readonly' ở đây)
             self.e_points.delete(0, tk.END)
             self.e_points.insert(0, str(extra.get("points", 0)))
             self.cbo_level.set(extra.get("level", "Thân thiết"))
@@ -100,6 +110,10 @@ class CustomerDialog(tk.Toplevel):
         dob = self.e_dob.get().strip()
         points = self.e_points.get().strip()
         level = self.cbo_level.get()
+
+        if not name:
+            messagebox.showwarning("Thiếu thông tin", "Vui lòng nhập tên khách hàng")
+            return
 
         success, msg = self.controller.save(self.mode, self.customer_id, name, phone, email, dob, points, level)
 

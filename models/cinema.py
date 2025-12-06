@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, UniqueConstraint
+from sqlalchemy import Column, Integer, String, ForeignKey, UniqueConstraint, Boolean
 from sqlalchemy.orm import relationship
 from .base import Base
 
@@ -8,6 +8,7 @@ class Room(Base):
     room_id = Column(Integer, primary_key=True)
     room_name = Column(String(50), unique=True, nullable=False)
     capacity = Column(Integer, nullable=False)
+    is_active = Column(Boolean, default=True)
 
     # Quan hệ
     seats = relationship("Seat", back_populates="room", cascade="all, delete-orphan")

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, Numeric, ForeignKey, Text
+from sqlalchemy import Column, Integer, String, DateTime, Numeric, ForeignKey, Text, Boolean
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import JSONB
 from .base import Base
@@ -12,6 +12,7 @@ class Movie(Base):
     description = Column(Text)
     poster_path = Column(String(255))
     extra_info = Column(JSONB)
+    is_active = Column(Boolean, default=True)
 
     showtimes = relationship("Showtime", back_populates="movie")
 
@@ -23,6 +24,7 @@ class Showtime(Base):
     start_time = Column(DateTime, nullable=False)
     ticket_price = Column(Numeric(10, 2), nullable=False)
     extra_info = Column(JSONB)
+    is_active = Column(Boolean, default=True)
 
     movie = relationship("Movie", back_populates="showtimes")
     room = relationship("Room", back_populates="showtimes")

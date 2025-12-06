@@ -7,7 +7,7 @@ class ProductDAO:
     def get_all(self):
         session = db.get_session()
         try:
-            return session.query(Product).order_by(Product.category, Product.name).all()
+            return session.query(Product).filter_by(is_active=True).order_by(Product.category).all()
         finally:
             session.close()
 
@@ -52,19 +52,13 @@ class ProductDAO:
         try:
             prod = session.query(Product).get(p_id)
             if prod:
-                session.delete(prod)
+                prod.is_active = False # Xóa mềm
                 session.commit()
                 return True, "Đã xóa sản phẩm"
-
-            return False, "Không tìm thấy sản phẩm"
-
-        except IntegrityError:
-            session.rollback()
-            return False, "Không thể xóa: Sản phẩm này đã có trong lịch sử bán hàng!"
-
+            return False, "Không tìm thấy"
         except SQLAlchemyError as e:
             session.rollback()
-            return False, f"Lỗi hệ thống: {str(e)}"
+            return False, str(e)
         finally:
             session.close()
 
@@ -72,5 +66,32 @@ class ProductDAO:
         session = db.get_session()
         try:
             return session.query(Product).get(p_id)
+        finally:
+            session.close()
+
+    def search_products(self, keyword="", category="Tất cả"):
+        session = db.get_session()
+        try:
+            query = session.query(Product).filter_by(is_active=True)
+
+            # Lọc theo từ khóa (Tên sản phẩm)
+            if keyword:
+                query = query.filter(Product.name.ilike(f"%{keyword}%"))
+
+            # Lọc theo loại
+            if category and category != "Tất cả":
+                query = query.filter(Product.category == category)
+
+            return query.order_by(Product.name).all()
+        finally:
+            session.close()
+
+    def get_categories(self):
+        """Lấy danh sách các loại sản phẩm duy nhất đang có"""
+        session = db.get_session()
+        try:
+            # Lấy distinct category
+            cats = session.query(Product.category).filter_by(is_active=True).distinct().all()
+            return [c[0] for c in cats]
         finally:
             session.close()

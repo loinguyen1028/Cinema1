@@ -1,67 +1,64 @@
 import tkinter as tk
-from tkinter import messagebox
+from tkinter import ttk, messagebox
 
-class RoomDialog:
+
+class RoomDialog(tk.Toplevel):
     def __init__(self, parent, controller, mode="add", room_id=None, on_success=None):
-        self.parent = parent
+        super().__init__(parent)
         self.controller = controller
-        self.mode = mode  # "add" for add, "edit" for edit
-        self.room_id = room_id  # Room ID if editing an existing room
-        self.on_success = on_success  # Callback function to refresh the room list after success
+        self.mode = mode
+        self.room_id = room_id
+        self.on_success = on_success
 
-        self.render()
+        self.title("Thêm phòng chiếu" if mode == "add" else "Cập nhật phòng chiếu")
+        self.geometry("400x300")
+        self.config(bg="#f5f6f8")
+        self.grab_set()
 
-    def render(self):
-        # Create the dialog window (Toplevel)
-        self.dialog = tk.Toplevel(self.parent)
-        self.dialog.title("Thêm Phòng Chiếu" if self.mode == "add" else "Sửa Phòng Chiếu")
+        self.render_ui()
 
-        # Label and Entry for Room Name
-        tk.Label(self.dialog, text="Tên Phòng:").grid(row=0, column=0)
-        self.entry_name = tk.Entry(self.dialog)
-        self.entry_name.grid(row=0, column=1)
+        # Load dữ liệu nếu là chế độ Sửa
+        if mode == "edit" and room_id:
+            self.load_data()
 
-        # Label and Entry for Room Capacity
-        tk.Label(self.dialog, text="Sức Chứa:").grid(row=1, column=0)
-        self.entry_capacity = tk.Entry(self.dialog)
-        self.entry_capacity.grid(row=1, column=1)
+    def render_ui(self):
+        container = tk.Frame(self, bg="#f5f6f8", padx=30, pady=20)
+        container.pack(fill=tk.BOTH, expand=True)
 
-        # If editing, populate fields with current room data
-        if self.mode == "edit":
-            room = self.controller.get_room_by_id(self.room_id)
-            if room:
-                self.entry_name.insert(0, room.room_name)
-                self.entry_capacity.insert(0, room.capacity)
+        tk.Label(container, text=self.title(), font=("Arial", 14, "bold"), bg="#f5f6f8", fg="#333").pack(anchor="w",
+                                                                                                         pady=(0, 20))
 
-        # Save Button
-        tk.Button(self.dialog, text="Lưu", command=self.save).grid(row=2, column=0, columnspan=2)
+        # 1. Tên phòng
+        tk.Label(container, text="Tên phòng chiếu", bg="#f5f6f8", fg="#555").pack(anchor="w")
+        self.e_name = tk.Entry(container, font=("Arial", 11))
+        self.e_name.pack(fill=tk.X, ipady=4, pady=(0, 10))
 
-    def save(self):
-        room_name = self.entry_name.get()
-        capacity = self.entry_capacity.get()
+        # 2. Số lượng ghế
+        tk.Label(container, text="Tổng số ghế (Capacity)", bg="#f5f6f8", fg="#555").pack(anchor="w")
+        self.e_seats = tk.Entry(container, font=("Arial", 11))
+        self.e_seats.pack(fill=tk.X, ipady=4, pady=(0, 10))
 
-        # Validate inputs
-        if not room_name or not capacity:
-            messagebox.showwarning("Thông báo", "Vui lòng nhập đầy đủ thông tin phòng!")
-            return
+        # Nút Lưu
+        tk.Button(container, text="Lưu", bg="#1976d2", fg="white", font=("Arial", 10, "bold"),
+                  width=15, command=self.save_action).pack(pady=20)
 
-        # Convert capacity to integer
-        try:
-            capacity = int(capacity)
-        except ValueError:
-            messagebox.showwarning("Thông báo", "Sức chứa phải là một số hợp lệ!")
-            return
+    def load_data(self):
+        # Gọi controller để lấy thông tin phòng
+        room = self.controller.get_room_by_id(self.room_id)
+        if room:
+            self.e_name.insert(0, room.room_name)
+            self.e_seats.insert(0, str(room.capacity))
 
-        # Add or Edit Room based on mode
-        if self.mode == "add":
-            success, msg = self.controller.add_room(room_name, capacity)
-        else:
-            success, msg = self.controller.update_room(self.room_id, room_name, capacity)
+    def save_action(self):
+        name = self.e_name.get().strip()
+        seats = self.e_seats.get().strip()
+
+        # --- SỬA LỖI TẠI ĐÂY: Gọi hàm save_room thay vì update_room ---
+        success, msg = self.controller.save_room(self.mode, self.room_id, name, seats)
 
         if success:
-            messagebox.showinfo("Thông báo", msg)
-            if self.on_success:
-                self.on_success()  # Refresh the room list
-            self.dialog.destroy()
+            messagebox.showinfo("Thành công", msg)
+            if self.on_success: self.on_success()
+            self.destroy()
         else:
-            messagebox.showerror("Lỗi", msg)
+            messagebox.showwarning("Lỗi", msg)

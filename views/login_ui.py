@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import messagebox
 from dao.auth_dao import AuthDAO
-
+from controllers.auth_controller import AuthController
 
 class LoginWindow:
     def __init__(self, root, on_login_success):
@@ -10,6 +10,7 @@ class LoginWindow:
 
         # Khởi tạo DAO
         self.auth_dao = AuthDAO()
+        self.controller = AuthController()
 
         self.root.title("Đăng nhập - LHQ Cinema")
         self.root.geometry("900x600")
@@ -50,19 +51,27 @@ class LoginWindow:
         password = self.entry_pass.get().strip()
 
         if not username or not password:
-            messagebox.showwarning("Thông báo", "Vui lòng nhập đầy đủ thông tin!")
+            messagebox.showwarning("Thông báo", "Vui lòng nhập đầy đủ thông tin")
             return
 
-        # Gọi DAO kiểm tra đăng nhập
-        user = self.auth_dao.login(username, password)
+        # Gọi Controller
+        user, msg = self.controller.login(username, password)
 
         if user:
-            self.root.unbind('<Return>')
-            # Đăng nhập thành công
-            self.login_frame.destroy()
+            # --- TRƯỜNG HỢP THÀNH CÔNG ---
+            # 1. Hủy bind phím Enter để tránh lỗi ở màn hình sau
+            try:
+                self.root.unbind('<Return>')
+            except:
+                pass  # Bỏ qua nếu không tìm thấy root
 
-            # QUAN TRỌNG: Truyền nguyên object user qua main.py
-            # Để main.py tự xử lý việc lấy role và user_id
+            # 2. Xóa giao diện đăng nhập (nếu cần thiết, tùy cách bạn quản lý view)
+            # self.destroy() hoặc self.login_frame.destroy() tùy vào cấu trúc class của bạn
+
+            # 3. Chuyển sang màn hình chính
             self.on_success(user)
+
         else:
-            messagebox.showerror("Đăng nhập thất bại", "Sai tài khoản hoặc mật khẩu!")
+            # --- TRƯỜNG HỢP THẤT BẠI ---
+            # Hiện đúng cái msg mà Service trả về (Sai pass, Khóa, Không tồn tại...)
+            messagebox.showerror("Đăng nhập thất bại", msg)

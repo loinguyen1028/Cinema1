@@ -12,18 +12,14 @@ class SeatDAO:
             session.close()
 
     def get_booked_seat_ids(self, showtime_id):
-        """Lấy danh sách ID các ghế đã được đặt cho suất chiếu này"""
         session = db.get_session()
         try:
-            # Query: Tìm seat_id trong bảng TicketSeat -> Ticket -> Showtime
-            # ticket_seats JOIN tickets ON ... WHERE tickets.showtime_id = ...
-            booked = session.query(TicketSeat.seat_id)\
-                            .join(Ticket)\
-                            .filter(Ticket.showtime_id == showtime_id).all()
-            # Kết quả trả về là list các tuple [(1,), (2,), ...], cần chuyển về list [1, 2, ...]
+            # Query: Chỉ lấy ghế của những vé có status = 'booked'
+            booked = session.query(TicketSeat.seat_id) \
+                .join(Ticket) \
+                .filter(Ticket.showtime_id == showtime_id) \
+                .filter(Ticket.status == 'booked') \
+                .all()
             return [b[0] for b in booked]
-        except Exception as e:
-            print(f"Lỗi lấy ghế đã đặt: {e}")
-            return []
         finally:
             session.close()

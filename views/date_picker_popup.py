@@ -4,14 +4,7 @@ from datetime import datetime
 
 
 class DatePickerPopup:
-    # --- CẬP NHẬT: Thêm tham số trigger_widget=None ---
     def __init__(self, parent, current_date_str, on_confirm_callback, trigger_widget=None):
-        """
-        parent: Cửa sổ cha
-        current_date_str: Ngày hiện tại (vd: "25/12/2025")
-        on_confirm_callback: Hàm callback chạy khi chọn xong
-        trigger_widget: Widget đã gọi lịch (dùng để tính toán vị trí hiển thị)
-        """
         self.parent = parent
         self.callback = on_confirm_callback
         self.current_date_str = current_date_str
@@ -20,52 +13,73 @@ class DatePickerPopup:
         self.show_calendar()
 
     def show_calendar(self):
-        # Tạo cửa sổ con (Toplevel)
         self.window = tk.Toplevel(self.parent)
         self.window.title("Chọn ngày")
-        self.window.geometry("300x280")
+
+        # Định nghĩa kích thước cố định cho Popup
+        POPUP_WIDTH = 300
+        POPUP_HEIGHT = 280
+        self.window.geometry(f"{POPUP_WIDTH}x{POPUP_HEIGHT}")
+
         self.window.grab_set()
         self.window.resizable(False, False)
 
-        # --- LOGIC TÍNH TOÁN VỊ TRÍ HIỂN THỊ MỚI ---
+        # --- TÍNH TOÁN VỊ TRÍ THÔNG MINH ---
+        # Lấy kích thước màn hình máy tính
+        screen_width = self.window.winfo_screenwidth()
+        screen_height = self.window.winfo_screenheight()
+
         x = 0
         y = 0
 
         if self.trigger_widget:
             try:
-                # Lấy toạ độ tuyệt đối của widget gọi lịch
+                # Cập nhật thông tin widget mới nhất
+                self.trigger_widget.update_idletasks()
+
                 widget_x = self.trigger_widget.winfo_rootx()
                 widget_y = self.trigger_widget.winfo_rooty()
                 widget_height = self.trigger_widget.winfo_height()
 
-                # Tính toán: X bằng mép trái widget, Y nằm ngay dưới đáy widget
+                # 1. Mặc định: Căn trái theo widget, nằm ngay bên dưới
                 x = widget_x
-                y = widget_y + widget_height + 2
+                y = widget_y + widget_height + 5
 
-                # Kiểm tra nếu lịch bị tràn ra khỏi màn hình dưới thì đẩy lên trên
-                screen_height = self.window.winfo_screenheight()
-                if y + 280 > screen_height:
-                    y = widget_y - 280 - 2
-            except:
-                # Nếu lỗi lấy toạ độ widget thì dùng chuột
+                # 2. Xử lý tràn mép PHẢI màn hình
+                if x + POPUP_WIDTH > screen_width:
+                    # Dịch sang trái để mép phải popup chạm mép phải màn hình (trừ 10px lề)
+                    x = screen_width - POPUP_WIDTH - 10
+
+                # 3. Xử lý tràn mép TRÁI màn hình (ít gặp, nhưng phòng hờ)
+                if x < 0:
+                    x = 10
+
+                # 4. Xử lý tràn mép DƯỚI màn hình
+                if y + POPUP_HEIGHT > screen_height:
+                    # Lật ngược lên trên đầu widget
+                    y = widget_y - POPUP_HEIGHT - 5
+
+            except Exception as e:
+                print(f"Lỗi tính vị trí: {e}")
+                # Fallback: Hiện tại vị trí chuột
                 x = self.parent.winfo_pointerx()
                 y = self.parent.winfo_pointery()
         else:
-            # Fallback: Hiện tại vị trí chuột nếu không truyền widget
+            # Nếu không có widget kích hoạt, hiện tại vị trí chuột
             x = self.parent.winfo_pointerx()
             y = self.parent.winfo_pointery()
 
-        self.window.geometry(f"+{x - 350}+{y}")
+        # Áp dụng toạ độ đã tính toán (x, y là số dương)
+        self.window.geometry(f"+{x}+{y}")
 
         # --- XỬ LÝ NGÀY MẶC ĐỊNH ---
         try:
-            # Parse ngày từ chuỗi "dd/mm/yyyy"
             d, m, y_cal = map(int, self.current_date_str.split('/'))
         except:
             now = datetime.now()
             d, m, y_cal = now.day, now.month, now.year
 
-        # --- WIDGET LỊCH ---
+        # --- VẼ LỊCH ---
         self.cal = Calendar(self.window, selectmode='day',
                             day=d, month=m, year=y_cal,
                             date_pattern='dd/mm/yyyy',
@@ -75,13 +89,11 @@ class DatePickerPopup:
                             )
         self.cal.pack(pady=10, padx=10, fill="both", expand=True)
 
-        # --- NÚT XÁC NHẬN ---
         btn_confirm = tk.Button(self.window, text="Chọn ngày này",
                                 bg="#ff9800", fg="white", font=("Arial", 10, "bold"),
                                 command=self.confirm_selection, relief="flat", cursor="hand2")
         btn_confirm.pack(pady=(0, 10), ipady=5, ipadx=10)
 
-        # Bắt sự kiện Double Click vào ngày để chọn nhanh
         self.cal.bind("<Double-1>", lambda e: self.confirm_selection())
 
     def confirm_selection(self):

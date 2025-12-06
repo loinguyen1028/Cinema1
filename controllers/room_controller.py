@@ -1,17 +1,17 @@
-from dao.RoomDAO import RoomDAO  # DAO xử lý trực tiếp với CSDL
+from services.room_service import RoomService
 
 class RoomController:
     def __init__(self):
-        self.room_dao = RoomDAO()
+        self.service = RoomService()
 
     def get_all_rooms(self):
-        return self.room_dao.get_all_rooms()
+        return self.service.get_all()
 
-    def add_room(self, room_name, capacity):
-        return self.room_dao.add_room(room_name, capacity)
+    def get_room_by_id(self, room_id):
+        return self.service.get_by_id(room_id)
 
-    def update_room(self, room_id, room_name, capacity):
-        return self.room_dao.update_room(room_id, room_name, capacity)
+    def save_room(self, mode, room_id, name, total_seats):
+        return self.service.save_room(mode, room_id, name, total_seats)
 
     def delete_room(self, room_id):
-        return self.room_dao.delete_room(room_id)
+        return self.service.delete_room(room_id)

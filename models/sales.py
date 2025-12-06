@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, Numeric, ForeignKey, UniqueConstraint
+from sqlalchemy import Column, Integer, String, DateTime, Numeric, ForeignKey, UniqueConstraint, Boolean
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import JSONB
 from datetime import datetime
@@ -13,6 +13,7 @@ class Customer(Base):
     email = Column(String(100))
     created_at = Column(DateTime, default=datetime.now)
     extra_info = Column(JSONB)
+    is_active = Column(Boolean, default=True)
 
     tickets = relationship("Ticket", back_populates="customer")
 
@@ -30,6 +31,7 @@ class Ticket(Base):
     showtime = relationship("Showtime", back_populates="tickets")
     customer = relationship("Customer", back_populates="tickets")
     user = relationship("User", back_populates="sales")
+    status = Column(String(20), default='booked')
 
     # Quan hệ với ghế (1 vé có nhiều ghế)
     ticket_seats = relationship("TicketSeat", back_populates="ticket", cascade="all, delete-orphan")
