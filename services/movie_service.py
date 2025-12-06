@@ -42,15 +42,14 @@ class MovieService:
 
         # 2. XỬ LÝ LOGIC (Gọi DAO)
         if mode == "add":
-            success = self.movie_dao.add_movie(name, duration, country, genre, actors, lang, age, desc, poster)
-            action = "Thêm mới"
+            success, db_msg = self.movie_dao.add_movie(name, duration, country, genre, actors, lang, age, desc, poster)
         else:
-            success = self.movie_dao.update_movie(movie_id, name, duration, country, genre, actors, lang, age, desc,
-                                                  poster)
-            action = "Cập nhật"
+            success, db_msg = self.movie_dao.update_movie(movie_id, name, duration, country, genre, actors, lang, age,
+                                                          desc, poster)
 
         # 3. TRẢ KẾT QUẢ
         if success:
-            return True, f"{action} phim thành công!"
+            return True, db_msg
         else:
-            return False, f"Lỗi hệ thống: {action} thất bại."
+            # Nếu thất bại, trả về đúng thông báo lỗi từ DAO (ví dụ: lỗi SQL)
+            return False, db_msg

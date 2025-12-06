@@ -26,7 +26,7 @@ class MovieDAO:
                 "language": language, "age_limit": age_limit
             }
             new_movie = Movie(
-                title=title, duration=int(duration),
+                title=title, duration_min=int(duration),
                 description=description, poster_path=poster_path,
                 extra_info=extra
             )
@@ -49,7 +49,7 @@ class MovieDAO:
             m = session.query(Movie).get(movie_id)
             if m:
                 m.title = title
-                m.duration = int(duration)
+                m.duration_min = int(duration)
                 m.description = description
                 if poster_path: m.poster_path = poster_path
 
