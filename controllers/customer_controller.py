@@ -18,3 +18,6 @@ class CustomerController:
 
     def delete(self, customer_id):
         return self.service.delete_customer(customer_id)
+
+    def get_by_phone(self, phone):
+        return self.service.get_by_phone(phone)

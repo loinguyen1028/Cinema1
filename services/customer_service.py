@@ -8,6 +8,9 @@ class CustomerService:
     def get_all(self):
         return self.dao.get_all()
 
+    def get_by_phone(self, phone):
+        return self.dao.get_by_phone(phone)
+
     def search(self, keyword):
         return self.dao.search(keyword)
 

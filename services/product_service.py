@@ -1,11 +1,12 @@
 from dao.product_dao import ProductDAO
-from dao.ticket_dao import TicketDAO  # Import thêm để xử lý bán hàng trực tiếp
-
+from dao.ticket_dao import TicketDAO
+from dao.customer_dao import CustomerDAO
 
 class ProductService:
     def __init__(self):
         self.dao = ProductDAO()
         self.ticket_dao = TicketDAO()
+        self.customer_dao = CustomerDAO()
 
     def get_all(self):
         return self.dao.get_all()
@@ -31,19 +32,23 @@ class ProductService:
         return self.dao.delete(p_id)
 
     # Xử lý bán hàng trực tiếp (Đồ ăn)
-    def process_direct_sale(self, user_id, total_amount, products_list):
+    def process_direct_sale(self, user_id, total_amount, products_list, customer_id=None):
         if not products_list:
-            return False, "Giỏ hàng trống"
+            return False, "Giỏ hàng trống!"
 
-        # Gọi TicketDAO tạo hóa đơn loại "Bắp nước" (showtime_id=None)
-        return self.ticket_dao.create_ticket(
-            showtime_id=None,
-            user_id=user_id,
-            seat_ids=[],
-            total_amount=total_amount,
-            customer_id=None,
-            products_list=products_list
-        )
+        try:
+            success = self.ticket_dao.create_concession_transaction(user_id, total_amount, products_list, customer_id)
+
+            if success:
+                if customer_id:
+                    self.customer_dao.update_membership(customer_id, total_amount)
+
+                return True, "Thanh toán thành công!"
+            else:
+                return False, "Lỗi khi lưu giao dịch vào Database"
+
+        except Exception as e:
+            return False, f"Lỗi hệ thống: {str(e)}"
 
     def search_products(self, keyword, category):
         return self.dao.search_products(keyword, category)

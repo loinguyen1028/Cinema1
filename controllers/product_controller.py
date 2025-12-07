@@ -18,8 +18,8 @@ class ProductController:
         return self.service.delete_product(p_id)
 
     # Hàm xử lý bán hàng trực tiếp (Đồ ăn)
-    def process_direct_sale(self, user_id, total_amount, products_list):
-        return self.service.process_direct_sale(user_id, total_amount, products_list)
+    def process_direct_sale(self, user_id, total_amount, products_list, customer_id=None):
+        return self.service.process_direct_sale(user_id, total_amount, products_list, customer_id)
 
     def search(self, keyword, category):
         return self.service.search_products(keyword, category)

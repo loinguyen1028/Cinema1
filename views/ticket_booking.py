@@ -127,7 +127,13 @@ class TicketBooking:
         scrollbar.pack(side="right", fill="y")
 
         def _on_mousewheel(event):
-            canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+            try:
+                # Kiểm tra xem canvas còn tồn tại không trước khi cuộn
+                if self.canvas.winfo_exists():
+                    self.canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+            except Exception:
+                # Nếu có lỗi (do widget đã bị hủy), chỉ cần bỏ qua
+                pass
 
         canvas.bind_all("<MouseWheel>", _on_mousewheel)
 
