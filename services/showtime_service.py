@@ -23,8 +23,12 @@ class ShowtimeService:
         except ValueError:
             return False, "Định dạng Ngày/Giờ không đúng"
 
-        if not str(price).isdigit() or float(price) < 0:
-            return False, "Giá vé không hợp lệ"
+        try:
+            price_val = float(price)
+            if price_val < 0:
+                return False, "Giá vé không được nhỏ hơn 0"
+        except ValueError:
+            return False, "Giá vé phải là số (không được chứa chữ cái)"
 
         # 2. (Nâng cao) Có thể thêm logic check trùng lịch chiếu tại đây
         # existing = self.dao.check_conflict(room_id, start_dt, duration) ...

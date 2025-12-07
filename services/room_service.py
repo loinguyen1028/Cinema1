@@ -16,8 +16,12 @@ class RoomService:
         if not name:
             return False, "Tên phòng không được để trống"
 
-        if not str(total_seats).isdigit() or int(total_seats) <= 0:
-            return False, "Số lượng ghế phải là số dương lớn hơn 0"
+        try:
+            seats_val = int(total_seats)
+            if seats_val <= 0:
+                return False, "Số lượng ghế phải lớn hơn 0"
+        except ValueError:
+            return False, "Số lượng ghế phải là số nguyên (không chứa chữ)"
 
         if mode == "add":
             return self.dao.add_room(name, int(total_seats))

@@ -23,6 +23,12 @@ class CustomerService:
             email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
             if not re.match(email_pattern, email):
                 return False, "Định dạng Email không hợp lệ (Ví dụ: user@example.com)"
+        try:
+            points_val = int(points)
+            if points_val < 0:
+                return False, "Điểm tích lũy không được âm"
+        except ValueError:
+            return False, "Điểm tích lũy phải là số nguyên"
 
         if mode == "add":
             return self.dao.add(name, phone, email, dob, points, level)

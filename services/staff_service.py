@@ -1,3 +1,4 @@
+import re
 from dao.staff_dao import StaffDAO
 
 
@@ -8,6 +9,9 @@ class StaffService:
     def get_all(self):
         return self.dao.get_all_staff()
 
+    def get_by_id(self, staff_id):
+        return self.dao.get_by_id(staff_id)
+
     def search(self, keyword):
         return self.dao.search_staff(keyword)
 
@@ -15,22 +19,44 @@ class StaffService:
         return self.dao.get_all_roles()
 
     def save_staff(self, mode, staff_id, data):
-        # Validate
-        if not data['name']: return False, "Họ tên không được để trống"
-        if not data['phone']: return False, "SĐT không được để trống"
+        name = data.get('name', '').strip()
+        phone = data.get('phone', '').strip()
+        email = data.get('email', '').strip()
+        username = data.get('username', '').strip()
+
+        # Kiểm tra rỗng
+        if not name: return False, "Họ tên không được để trống"
+        if not phone: return False, "SĐT không được để trống"
+
+        # Kiểm tra định dạng Số điện thoại (Phải là số, độ dài 9-11)
+        if not phone.isdigit():
+            return False, "Số điện thoại phải là số!"
+        if len(phone) < 9 or len(phone) > 11:
+            return False, "Số điện thoại phải từ 9 đến 11 số!"
+
+        # Kiểm tra định dạng Email (Nếu có nhập)
+        if email:
+            email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+            if not re.match(email_pattern, email):
+                return False, "Định dạng Email không hợp lệ (Ví dụ: user@example.com)"
 
         if mode == "add":
-            if not data['username']: return False, "Tài khoản không được để trống"
+            if not username: return False, "Tài khoản không được để trống"
+
+            # Kiểm tra username không được chứa dấu cách hoặc ký tự đặc biệt
+            if not re.match(r'^[a-zA-Z0-9_]+$', username):
+                return False, "Tài khoản chỉ được chứa chữ, số và dấu gạch dưới!"
+
             return self.dao.add_staff(
-                data['name'], data['gender'], data['dob'],
-                data['phone'], data['email'],
-                data['start_date'], data['username'], data['role_id']
+                name, data['gender'], data['dob'],
+                phone, email,
+                data['start_date'], username, data['role_id']
             )
         else:
             return self.dao.update_staff(
                 staff_id,
-                data['name'], data['gender'], data['dob'],
-                data['phone'], data['email'],
+                name, data['gender'], data['dob'],
+                phone, email,
                 data['start_date'], data['role_id']
             )
 

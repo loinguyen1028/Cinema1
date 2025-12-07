@@ -37,8 +37,12 @@ class MovieService:
         if not duration:
             return False, "Vui lòng nhập thời lượng!"
 
-        if not duration.isdigit() or int(duration) <= 0:
-            return False, "Thời lượng phải là số nguyên dương!"
+        try:
+            dur_val = int(duration)
+            if dur_val <= 0:
+                return False, "Thời lượng phải lớn hơn 0 phút!"
+        except ValueError:
+            return False, "Thời lượng phải là số nguyên (không chứa chữ)!"
 
         # 2. XỬ LÝ LOGIC (Gọi DAO)
         if mode == "add":

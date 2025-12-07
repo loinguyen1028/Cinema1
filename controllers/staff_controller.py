@@ -21,3 +21,6 @@ class StaffController:
 
     def reset_password(self, staff_id, new_pass, confirm_pass):
         return self.service.reset_password(staff_id, new_pass, confirm_pass)
+
+    def get_detail(self, staff_id):
+        return self.service.get_by_id(staff_id)

@@ -105,20 +105,43 @@ class StaffDialog(tk.Toplevel):
 
     def load_data(self):
         staff = self.controller.get_detail(self.staff_id)
-        if staff:
-            self.e_name.insert(0, staff.full_name)
-            self.e_username.insert(0, staff.username)
-            self.e_username.config(state="readonly")
 
-            if staff.role:
-                self.cbo_role.set(staff.role.role_name)
+        extra = staff.extra_info if staff.extra_info else {}
 
-            extra = staff.extra_info if staff.extra_info else {}
-            self.cbo_gender.set(extra.get("gender", ""))
-            self.e_dob.insert(0, extra.get("dob", ""))
-            self.e_phone.insert(0, extra.get("phone", ""))
-            self.e_email.insert(0, extra.get("email", ""))
+        # 1. Họ tên
+        name = extra.get("name", "")
+        self.e_name.delete(0, tk.END)
+        self.e_name.insert(0, name)  # Đảm bảo biến name là chuỗi, không bị None
+
+        # 2. Các thông tin khác (SĐT, Email...)
+        # Lưu ý: Cần clear dữ liệu cũ trước khi insert
+        self.e_phone.delete(0, tk.END)
+        self.e_phone.insert(0, extra.get("phone", ""))
+
+        self.e_email.delete(0, tk.END)
+        self.e_email.insert(0, extra.get("email", ""))
+
+        self.e_dob.delete(0, tk.END)
+        self.e_dob.insert(0, extra.get("dob", ""))
+
+        # 3. Chức vụ (Combobox)
+        if staff.role:
+            self.cbo_role.set(staff.role.role_name)
+
+        # --- Load các trường khác (Giới tính, Ngày vào làm...) nếu có ---
+        self.cbo_gender.set(extra.get("gender", "Nam"))
+
+        # Nếu có trường ngày vào làm
+        if hasattr(self, 'e_start_date'):
+            self.e_start_date.delete(0, tk.END)
             self.e_start_date.insert(0, extra.get("start_date", ""))
+
+        # Nếu có trường username (thường khi sửa thì username bị khóa hoặc readonly)
+        if hasattr(self, 'e_username'):
+            self.e_username.config(state='normal')
+            self.e_username.delete(0, tk.END)
+            self.e_username.insert(0, staff.username)
+            self.e_username.config(state='readonly')
 
     def save_action(self):
         role_name = self.cbo_role.get()

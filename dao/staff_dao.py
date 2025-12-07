@@ -77,7 +77,7 @@ class StaffDAO:
             }
 
             # Mật khẩu mặc định là 123456
-            new_staff = User(username=username, password="123456", role_id=role_id, extra_info=extra)
+            new_staff = User(username=username, password="123456", full_name=name, role_id=role_id, extra_info=extra)
             session.add(new_staff)
             session.commit()
             return True, "Thêm nhân viên thành công (Mật khẩu: 123456)"
@@ -97,7 +97,7 @@ class StaffDAO:
             user = session.query(User).get(staff_id)
             if user:
                 user.role_id = role_id
-
+                user.full_name = name
                 extra = dict(user.extra_info) if user.extra_info else {}
                 extra.update({
                     "name": name, "gender": gender, "dob": dob,
@@ -141,5 +141,16 @@ class StaffDAO:
         except Exception:
             session.rollback()
             return False
+        finally:
+            session.close()
+
+    def get_by_id(self, staff_id):
+        session = db.get_session()
+        try:
+            user = session.query(User).options(joinedload(User.role)).get(staff_id)
+            return user
+        except Exception as e:
+            print(f"Lỗi lấy thông tin nhân viên: {e}")
+            return None
         finally:
             session.close()
