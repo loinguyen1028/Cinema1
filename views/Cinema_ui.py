@@ -7,6 +7,7 @@ from views.customer_manager import CustomerManager
 from views.room_manager import RoomManager
 from views.change_password_dialog import ChangePasswordDialog
 from views.product_manager import ProductManager
+from views.stat_manager import StatManager
 
 class CinemaApp:
     # --- SỬA DÒNG NÀY: Thêm tham số user_id ---
@@ -129,6 +130,8 @@ class CinemaApp:
             StaffManager(self.body_frame)
         elif page_name == "Quản lí khách hàng":
             CustomerManager(self.body_frame)
+        elif page_name == "Thống kê":
+            StatManager(self.body_frame)
         else:
             self.render_empty_page(page_name)
 

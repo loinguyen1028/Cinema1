@@ -5,7 +5,6 @@ import os
 from datetime import datetime
 from views.date_picker_popup import DatePickerPopup
 from controllers.ticket_controller import TicketController
-# --- IMPORT MỚI: Dùng BookingDialog để bán vé ---
 from views.booking_dialog import BookingDialog
 
 
@@ -38,51 +37,74 @@ class TicketBooking:
         toolbar = tk.Frame(self.content, bg="white")
         toolbar.pack(fill=tk.X, padx=30, pady=20)
 
-        # --- TÌM KIẾM ---
-        f_search = tk.Frame(toolbar, bg="white")
-        f_search.pack(side=tk.LEFT, padx=(0, 40))
-        tk.Label(f_search, text="🔍", font=("Arial", 14), bg="white", fg="#555").pack(side=tk.LEFT)
+        # --- 1. TÌM KIẾM (Giao diện khung viền) ---
+        # Container cho cụm tìm kiếm
+        f_search_group = tk.Frame(toolbar, bg="white")
+        f_search_group.pack(side=tk.LEFT, padx=(0, 20))
 
-        self.entry_search = tk.Entry(f_search, font=("Arial", 11), width=25, bd=0, bg="white")
-        self.entry_search.pack(side=tk.LEFT)
-        self.entry_search.bind("<KeyRelease>", self.on_filter_change)  # Gõ là lọc
+        # Tiêu đề nhỏ bên trên (nếu muốn, hoặc bỏ đi)
+        tk.Label(f_search_group, text="Tìm kiếm phim", bg="white", fg="#757575", font=("Arial", 9)).pack(anchor="w",
+                                                                                                         pady=(0,
+                                                                                                               2))
+        search_border = tk.Frame(f_search_group, bg="white", highlightbackground="#bdbdbd", highlightthickness=1)
+        search_border.pack(fill=tk.X)
 
-        tk.Frame(f_search, bg="black", height=1).pack(side=tk.BOTTOM, fill=tk.X)
-        tk.Label(f_search, text="Tìm kiếm tên phim", bg="white", fg="#999", font=("Arial", 8)).place(x=25, y=-15)
+        # Icon kính lúp bên trong khung
+        tk.Label(search_border, text="🔍", font=("Arial", 11), bg="white", fg="#757575").pack(side=tk.LEFT,
+                                                                                             padx=(8, 2))
 
-        # --- THỂ LOẠI ---
-        f_genre = tk.Frame(toolbar, bg="white")
-        f_genre.pack(side=tk.LEFT, padx=(0, 40))
-        tk.Label(f_genre, text="▽", font=("Arial", 12), bg="white", fg="#555").pack(side=tk.LEFT)
+        # Ô nhập liệu (bỏ viền mặc định bd=0 để hòa nhập vào khung)
+        self.entry_search = tk.Entry(search_border, font=("Arial", 11), width=25, bd=0, bg="white")
+        self.entry_search.pack(side=tk.LEFT, ipady=6, padx=(0, 8))
+        self.entry_search.bind("<KeyRelease>", self.on_filter_change)
 
-        self.cbo_genre = ttk.Combobox(f_genre,
+        # Hiệu ứng: Đổi màu viền khi bấm vào
+        self.entry_search.bind("<FocusIn>",
+                               lambda e: search_border.config(highlightbackground="#1976d2", highlightthickness=2))
+        self.entry_search.bind("<FocusOut>",
+                               lambda e: search_border.config(highlightbackground="#bdbdbd", highlightthickness=1))
+
+        # --- 2. THỂ LOẠI (Combobox) ---
+        f_genre_group = tk.Frame(toolbar, bg="white")
+        f_genre_group.pack(side=tk.LEFT)
+
+        tk.Label(f_genre_group, text="Thể loại", bg="white", fg="#757575", font=("Arial", 9)).pack(anchor="w",
+                                                                                                   pady=(0, 2))
+
+        self.cbo_genre = ttk.Combobox(f_genre_group,
                                       values=["Tất cả", "Hành động", "Kinh dị", "Hoạt hình", "Tình cảm", "Hài"],
                                       font=("Arial", 11), width=15, state="readonly")
         self.cbo_genre.current(0)
-        self.cbo_genre.pack(side=tk.LEFT)
-        self.cbo_genre.bind("<<ComboboxSelected>>", self.on_filter_change)  # Chọn là lọc
+        self.cbo_genre.pack(side=tk.LEFT, ipady=4)
+        self.cbo_genre.bind("<<ComboboxSelected>>", self.on_filter_change)
 
-        tk.Frame(f_genre, bg="black", height=1).pack(side=tk.BOTTOM, fill=tk.X)
-        tk.Label(f_genre, text="Thể loại", bg="white", fg="#999", font=("Arial", 8)).place(x=20, y=-15)
-
-        # --- CHỌN NGÀY ---
+        # --- 3. CHỌN NGÀY (Bên phải) ---
         f_date = tk.Frame(toolbar, bg="white", cursor="hand2")
         f_date.pack(side=tk.RIGHT)
 
-        self.lbl_date = tk.Label(f_date, text=self.current_date, font=("Arial", 14, "bold"), bg="white", fg="#0f1746")
-        self.lbl_date.pack(side=tk.LEFT, padx=10)
+        tk.Label(f_date, text="Ngày chiếu", bg="white", fg="#757575", font=("Arial", 9)).pack(anchor="e",
+                                                                                              pady=(0, 2))
 
-        lbl_icon = tk.Label(f_date, text="📅", font=("Arial", 16), bg="white", fg="#555")
+        # Khung hiển thị ngày
+        date_display = tk.Frame(f_date, bg="#f5f6f8", padx=10, pady=5, highlightbackground="#bdbdbd",
+                                highlightthickness=1)
+        date_display.pack(anchor="e")
+
+        lbl_icon = tk.Label(date_display, text="📅", font=("Arial", 12), bg="#f5f6f8", fg="#1976d2")
         lbl_icon.pack(side=tk.LEFT)
 
+        self.lbl_date = tk.Label(date_display, text=self.current_date, font=("Arial", 12, "bold"), bg="#f5f6f8",
+                                 fg="#333")
+        self.lbl_date.pack(side=tk.LEFT, padx=(5, 0))
+
+        # Sự kiện chọn ngày
         def open_cal(e):
             DatePickerPopup(self.parent, self.current_date, self.on_date_selected, trigger_widget=f_date)
 
-        f_date.bind("<Button-1>", open_cal)
+        date_display.bind("<Button-1>", open_cal)
         self.lbl_date.bind("<Button-1>", open_cal)
         lbl_icon.bind("<Button-1>", open_cal)
 
-        tk.Frame(f_date, bg="black", height=1).pack(side=tk.BOTTOM, fill=tk.X)
 
     def render_scroll_area(self):
         container_scroll = tk.Frame(self.content, bg="white")
