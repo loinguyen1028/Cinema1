@@ -16,8 +16,14 @@ class ShowtimeService:
 
     def save_showtime(self, mode, st_id, movie_id, room_id, date_str, time_str, price):
         # 1. Validate dữ liệu đầu vào
-        if not movie_id or not room_id:
-            return False, "Chưa chọn Phim hoặc Phòng"
+        if not movie_id:
+            return False, "Chưa chọn Phim"
+        if not room_id:
+            return False, "Chưa chọn Phòng"
+        if not date_str:
+            return False, "Chưa chọn ngày"
+        if not time_str:
+            return False, "Chưa chọn giờ"
 
         try:
             full_str = f"{date_str} {time_str}"

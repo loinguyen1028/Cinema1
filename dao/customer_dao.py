@@ -52,7 +52,23 @@ class CustomerDAO:
     def add(self, name, phone, email, dob, points, level):
         session = db.get_session()
         try:
-            # 1. Chuẩn bị dữ liệu
+            # =================================================
+            # BƯỚC 1: KIỂM TRA THỦ CÔNG (MANUAL CHECK)
+            # =================================================
+
+            # 1. Kiểm tra trùng Số điện thoại
+            # (Vì SĐT là bắt buộc và duy nhất)
+            if session.query(Customer).filter_by(phone=phone).first():
+                return False, f"Số điện thoại {phone} đã tồn tại trong hệ thống!"
+
+            # 2. Kiểm tra trùng Email
+            # (Chỉ kiểm tra nếu người dùng CÓ nhập email)
+            if email and email.strip():
+                # Tìm trong DB xem có ai đang dùng email này không
+                exists_email = session.query(Customer).filter(Customer.email == email.strip()).first()
+                if exists_email:
+                    return False, f"Email '{email}' đã được sử dụng bởi khách hàng khác!"
+
             extra = {
                 "dob": dob,
                 "points": int(points) if str(points).isdigit() else 0,
@@ -65,27 +81,13 @@ class CustomerDAO:
 
             return True, "Thêm khách hàng thành công!"
 
-        except IntegrityError as e:
+        except IntegrityError:
+            # Vẫn giữ lại để phòng hờ các lỗi ràng buộc khác
             session.rollback()
-            # Phân tích lỗi để báo chính xác hơn
-            err_msg = str(e).lower()
-            if "phone" in err_msg:
-                return False, f"Số điện thoại {phone} đã tồn tại trong hệ thống!"
-            if "email" in err_msg:
-                return False, f"Email {email} đã được sử dụng!"
-            return False, "Dữ liệu bị trùng lặp (SĐT hoặc Email)!"
-
-        except DataError:
-            session.rollback()
-            return False, "Dữ liệu quá dài hoặc sai định dạng!"
-
-        except OperationalError:
-            session.rollback()
-            return False, "Lỗi kết nối cơ sở dữ liệu!"
-
+            return False, "Lỗi dữ liệu: Thông tin bị trùng lặp!"
         except Exception as e:
             session.rollback()
-            return False, f"Lỗi không xác định: {str(e)}"
+            return False, f"Lỗi hệ thống: {str(e)}"
         finally:
             session.close()
 
@@ -96,12 +98,31 @@ class CustomerDAO:
             if not cus:
                 return False, "Không tìm thấy khách hàng cần sửa!"
 
-            # Cập nhật thông tin
+            # --- 1. KIỂM TRA TRÙNG SĐT (Với người khác) ---
+            # Tìm khách hàng có SĐT này NHƯNG có ID khác với khách đang sửa
+            exist_phone = session.query(Customer).filter(
+                Customer.phone == phone,
+                Customer.customer_id != customer_id
+            ).first()
+
+            if exist_phone:
+                return False, f"Số điện thoại {phone} đang thuộc về khách hàng: {exist_phone.name}"
+
+            # --- 2. KIỂM TRA TRÙNG EMAIL (Với người khác) ---
+            if email and email.strip():
+                exist_email = session.query(Customer).filter(
+                    Customer.email == email.strip(),
+                    Customer.customer_id != customer_id
+                ).first()
+
+                if exist_email:
+                    return False, f"Email '{email}' đang thuộc về khách hàng: {exist_email.name}"
+
+            # --- 3. CẬP NHẬT ---
             cus.name = name
             cus.phone = phone
             cus.email = email
 
-            # Cập nhật JSON an toàn
             extra = dict(cus.extra_info) if cus.extra_info else {}
             extra["dob"] = dob
             extra["points"] = int(points) if str(points).isdigit() else 0
@@ -110,17 +131,6 @@ class CustomerDAO:
 
             session.commit()
             return True, "Cập nhật thành công!"
-
-        except IntegrityError as e:
-            session.rollback()
-            err_msg = str(e).lower()
-            if "phone" in err_msg:
-                return False, f"Số điện thoại {phone} đang thuộc về khách hàng khác!"
-            return False, "Thông tin trùng lặp với khách hàng khác!"
-
-        except DataError:
-            session.rollback()
-            return False, "Dữ liệu nhập vào không hợp lệ!"
 
         except Exception as e:
             session.rollback()

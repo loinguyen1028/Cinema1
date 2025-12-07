@@ -17,7 +17,12 @@ class CustomerService:
     def save_customer(self, mode, customer_id, name, phone, email, dob, points, level):
         if not name: return False, "Tên không được rỗng"
         if not phone: return False, "SĐT không được rỗng"
-        if not phone.isdigit() or len(phone) < 9: return False, "SĐT không hợp lệ"
+        if not phone.isdigit():
+            return False, "Số điện thoại chỉ được chứa các chữ số (0-9)!"
+        if len(phone) < 9 or len(phone) > 11:
+            return False, "Số điện thoại phải từ 9 đến 11 số!"
+        if not phone.startswith("0"):
+            return False, "Số điện thoại phải bắt đầu bằng số 0!"
 
         if email:
             email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
