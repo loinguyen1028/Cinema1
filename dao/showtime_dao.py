@@ -3,7 +3,7 @@ from sqlalchemy.orm import joinedload
 from db import db
 from models import Showtime, Movie, Room
 from datetime import datetime
-
+from sqlalchemy import cast, Date
 
 class ShowtimeDAO:
     def filter_showtimes(self, date_str=None, room_filter=None):
@@ -85,5 +85,21 @@ class ShowtimeDAO:
         except Exception:
             session.rollback()
             return False
+        finally:
+            session.close()
+
+    def get_showtimes_by_room_date(self, room_id, check_date):
+        """
+        Lấy danh sách suất chiếu của một phòng cụ thể vào một ngày cụ thể.
+        Dùng để kiểm tra trùng giờ.
+        """
+        session = db.get_session()
+        try:
+            return session.query(Showtime).options(joinedload(Showtime.movie)) \
+                .filter(
+                Showtime.room_id == room_id,
+                Showtime.is_active == True,
+                cast(Showtime.start_time, Date) == check_date  # So sánh ngày
+            ).all()
         finally:
             session.close()

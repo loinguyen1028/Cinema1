@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 from dao.seat_dao import SeatDAO
 from views.concession_dialog import ConcessionDialog  # <--- Import dialog chọn món
-
+from views.payment_dialog import PaymentConfirmDialog
 
 class BookingDialog(tk.Toplevel):
     def __init__(self, parent, controller, st_id, current_user_id):
@@ -346,20 +346,24 @@ class BookingDialog(tk.Toplevel):
 
         self.lbl_total.config(text=f"TỔNG: {int(final_total):,} VND")
 
+        # Import class vừa tạo ở trên đầu file
+        # from views.payment_dialog import PaymentConfirmDialog (nếu để file riêng)
+        # Hoặc nếu để chung file thì không cần import
+
     def on_payment(self):
         if not self.selected_seats:
             messagebox.showwarning("Thông báo", "Vui lòng chọn ghế!")
             return
 
-        cus_id = self.current_customer.customer_id if self.current_customer else None
+        # Hàm xử lý thực sự khi đã xác nhận
+        def do_process_payment():
+            cus_id = self.current_customer.customer_id if self.current_customer else None
 
-        # Chuẩn bị danh sách sản phẩm để lưu
-        prod_list_to_save = []
-        for pid, item in self.selected_products.items():
-            prod_list_to_save.append((pid, item['qty'], item['obj'].price))
+            # Chuẩn bị danh sách sản phẩm
+            prod_list_to_save = []
+            for pid, item in self.selected_products.items():
+                prod_list_to_save.append((pid, item['qty'], item['obj'].price))
 
-        if messagebox.askyesno("Xác nhận",
-                               f"Thanh toán {len(self.selected_seats)} vé?\nTổng tiền: {int(self.final_total_amount):,} VND"):
             success, msg = self.controller.process_payment(
                 self.st.showtime_id,
                 self.user_id,
@@ -368,8 +372,13 @@ class BookingDialog(tk.Toplevel):
                 customer_id=cus_id,
                 products_list=prod_list_to_save
             )
+
             if success:
-                messagebox.showinfo("Thành công", msg)
+                messagebox.showinfo("Thành công", "Đã xuất vé thành công!")
                 self.destroy()
             else:
                 messagebox.showerror("Lỗi", msg)
+
+        # --- THAY ĐỔI: Không hỏi Yes/No nữa, mà mở Dialog tính tiền ---
+        # Gọi PaymentConfirmDialog
+        PaymentConfirmDialog(self, self.final_total_amount, on_confirm=do_process_payment)
