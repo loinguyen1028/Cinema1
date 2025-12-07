@@ -65,49 +65,111 @@ class StaffDAO:
         finally:
             session.close()
 
+    # ---------------------------------------------------------
+    # SỬA HÀM ADD: SO SÁNH CHẶT CHẼ HƠN (LOWER + STRIP)
+    # ---------------------------------------------------------
     def add_staff(self, name, gender, dob, phone, email, start_date, username, role_id):
         session = db.get_session()
         try:
+            # 1. Kiểm tra trùng Username
             if session.query(User).filter_by(username=username).first():
                 return False, f"Tài khoản '{username}' đã tồn tại!"
 
+            # Chuẩn hóa dữ liệu đầu vào để so sánh (chữ thường, bỏ khoảng trắng)
+            input_phone = phone.strip()
+            input_email = email.strip().lower() if email else ""
+
+            # 2. Kiểm tra trùng SĐT và Email trong JSON
+            # Lấy tất cả user đang hoạt động
+            existing_users = session.query(User).filter(User.is_active == True).all()
+
+            for u in existing_users:
+                extra = u.extra_info if u.extra_info else {}
+
+                # Lấy dữ liệu DB và chuẩn hóa
+                u_phone = str(extra.get('phone', '')).strip()
+                u_email = str(extra.get('email', '')).strip().lower()
+
+                # So sánh SĐT
+                if u_phone == input_phone:
+                    return False, f"Số điện thoại {phone} đã được sử dụng bởi: {u.full_name}"
+
+                # So sánh Email (Chỉ so sánh nếu có nhập email)
+                if input_email and u_email == input_email:
+                    return False, f"Email {email} đã được sử dụng bởi: {u.full_name}"
+
+            # 3. Thêm mới
             extra = {
                 "name": name, "gender": gender, "dob": dob,
                 "phone": phone, "email": email, "start_date": start_date
             }
 
-            # Mật khẩu mặc định là 123456
-            new_staff = User(username=username, password="123456", full_name=name, role_id=role_id, extra_info=extra)
+            new_staff = User(
+                username=username,
+                password="123456",
+                full_name=name,
+                role_id=role_id,
+                extra_info=extra
+            )
             session.add(new_staff)
             session.commit()
             return True, "Thêm nhân viên thành công (Mật khẩu: 123456)"
 
         except IntegrityError:
             session.rollback()
-            return False, "Tài khoản hoặc dữ liệu bị trùng lặp!"
-        except SQLAlchemyError as e:
+            return False, "Dữ liệu bị trùng lặp hệ thống!"
+        except Exception as e:
             session.rollback()
             return False, f"Lỗi hệ thống: {str(e)}"
         finally:
             session.close()
 
+    # ---------------------------------------------------------
+    # SỬA HÀM UPDATE: CŨNG CẦN SO SÁNH CHẶT
+    # ---------------------------------------------------------
     def update_staff(self, staff_id, name, gender, dob, phone, email, start_date, role_id):
         session = db.get_session()
         try:
             user = session.query(User).get(staff_id)
-            if user:
-                user.role_id = role_id
-                user.full_name = name
-                extra = dict(user.extra_info) if user.extra_info else {}
-                extra.update({
-                    "name": name, "gender": gender, "dob": dob,
-                    "phone": phone, "email": email, "start_date": start_date
-                })
-                user.extra_info = extra
+            if not user:
+                return False, "Không tìm thấy nhân viên"
 
-                session.commit()
-                return True, "Cập nhật thành công!"
-            return False, "Không tìm thấy nhân viên"
+            # Chuẩn hóa dữ liệu đầu vào
+            input_phone = phone.strip()
+            input_email = email.strip().lower() if email else ""
+
+            # 1. Kiểm tra trùng với người KHÁC
+            others = session.query(User).filter(
+                User.is_active == True,
+                User.user_id != staff_id  # Loại trừ bản thân
+            ).all()
+
+            for u in others:
+                extra = u.extra_info if u.extra_info else {}
+
+                u_phone = str(extra.get('phone', '')).strip()
+                u_email = str(extra.get('email', '')).strip().lower()
+
+                if u_phone == input_phone:
+                    return False, f"Số điện thoại {phone} đang thuộc về: {u.full_name}"
+
+                if input_email and u_email == input_email:
+                    return False, f"Email {email} đang thuộc về: {u.full_name}"
+
+            # 2. Cập nhật
+            user.role_id = role_id
+            user.full_name = name
+
+            extra = dict(user.extra_info) if user.extra_info else {}
+            extra.update({
+                "name": name, "gender": gender, "dob": dob,
+                "phone": phone, "email": email, "start_date": start_date
+            })
+            user.extra_info = extra
+
+            session.commit()
+            return True, "Cập nhật thành công!"
+
         except Exception as e:
             session.rollback()
             return False, f"Lỗi: {str(e)}"
