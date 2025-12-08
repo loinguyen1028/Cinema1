@@ -97,11 +97,16 @@ class CustomerDialog(tk.Toplevel):
             extra = cus.extra_info if cus.extra_info else {}
             self.e_dob.insert(0, extra.get("dob", ""))
 
-            # Khi sửa (Edit), ta cho phép sửa điểm để Admin điều chỉnh nếu cần
-            # (Hoặc nếu muốn khóa luôn thì thêm config state='readonly' ở đây)
+            self.e_points.config(state='normal')
             self.e_points.delete(0, tk.END)
             self.e_points.insert(0, str(extra.get("points", 0)))
+            # 2. Khóa lại ngay lập tức (Read-only)
+            self.e_points.config(state='readonly')
+
+            # Hạng thành viên cũng khóa (vì nó tự động nhảy theo điểm)
+            self.cbo_level.config(state='normal')
             self.cbo_level.set(extra.get("level", "Thân thiết"))
+            self.cbo_level.config(state='disabled')
 
     def save_action(self):
         name = self.e_name.get().strip()

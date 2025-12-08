@@ -5,6 +5,7 @@ from views.customer_manager import CustomerManager
 from views.change_password_dialog import ChangePasswordDialog
 from views.concession_sales import ConcessionSales
 from views.ticket_manager import TicketManager
+from views.add_customer import AddCustomer
 
 class StaffApp:
     # --- SỬA DÒNG NÀY: Thêm tham số user_id ---
@@ -113,7 +114,7 @@ class StaffApp:
         if page_name == "Phim":
             TicketBooking(self.body_frame, user_id=self.user_id)
         elif page_name == "Khách hàng":
-            CustomerManager(self.body_frame)
+            AddCustomer(self.body_frame)
         elif page_name == "Đồ ăn":
             ConcessionSales(self.body_frame, user_id=self.user_id)
         elif page_name == "Vé đã đặt":
