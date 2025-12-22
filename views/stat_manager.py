@@ -1,187 +1,183 @@
 import tkinter as tk
-from tkinter import ttk
-import matplotlib.pyplot as plt
+from tkinter import ttk, messagebox
+from tkcalendar import Calendar
+from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from matplotlib.ticker import FuncFormatter
-from controllers.stat_controller import StatController
+import matplotlib.ticker as ticker
+from datetime import datetime, timedelta
+from controllers.stat_controller import StatsController
 
 
-# Hàm phụ trợ: Đổi số thành dạng rút gọn (1.000.000 -> 1M)
-def currency_formatter(x, pos):
-    if x >= 1_000_000_000:
-        return f'{x * 1e-9:.1f}B'
-    elif x >= 1_000_000:
-        return f'{x * 1e-6:.1f}M'  # M là Triệu
-    elif x >= 1_000:
-        return f'{x * 1e-3:.0f}k'
-    return f'{int(x)}'
+class StatManager(tk.Frame):
+    def __init__(self, parent):
+        super().__init__(parent, bg="#f0f2f5")
+        self.controller = StatsController()
 
+        self.render_filter_bar()
 
-class StatManager:
-    def __init__(self, parent_frame):
-        self.parent = parent_frame
-        self.controller = StatController()
+        # TẠO 3 TAB
+        self.notebook = ttk.Notebook(self)
+        self.notebook.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
 
-        # Cấu hình style chung cho matplotlib đẹp hơn
-        plt.style.use('bmh')  # Style nền xám nhẹ, có lưới
+        # Tab 1: Tài chính (Doanh thu, Cơ cấu, Theo phòng)
+        self.tab_finance = tk.Frame(self.notebook, bg="white")
+        self.notebook.add(self.tab_finance, text="1. Báo cáo Tài chính")
 
-        self.render()
+        # Tab 2: Hiệu suất (Top Phim, Top Sản phẩm)
+        self.tab_performance = tk.Frame(self.notebook, bg="white")
+        self.notebook.add(self.tab_performance, text="2. Hiệu suất & Sản phẩm")
 
-    def render(self):
-        plt.close('all')
-        # Tạo Tab
-        tab_control = ttk.Notebook(self.parent)
+        # Tab 3: Khách hàng & Xu hướng (Thành viên, Khung giờ vàng)
+        self.tab_customer = tk.Frame(self.notebook, bg="white")
+        self.notebook.add(self.tab_customer, text="3. Khách hàng & Xu hướng")
 
-        self.tab_revenue = tk.Frame(tab_control, bg="#ffffff")
-        self.tab_ranking = tk.Frame(tab_control, bg="#ffffff")
+        self.load_data()
+        self.pack(fill=tk.BOTH, expand=True)
 
-        tab_control.add(self.tab_revenue, text="📊 Báo cáo Doanh thu")
-        tab_control.add(self.tab_ranking, text="🏆 Top Phim & Sản phẩm")
+    def render_filter_bar(self):
+        bar = tk.Frame(self, bg="white", height=50)
+        bar.pack(fill=tk.X)
 
-        tab_control.pack(expand=1, fill="both", padx=10, pady=10)
+        tk.Label(bar, text="Từ ngày:", bg="white").pack(side=tk.LEFT, padx=5)
+        self.e_start = tk.Entry(bar, width=12)
+        self.e_start.pack(side=tk.LEFT)
+        self.e_start.insert(0, (datetime.now() - timedelta(days=30)).strftime('%Y-%m-%d'))
+        tk.Button(bar, text="📅", command=lambda: self.open_calendar(self.e_start)).pack(side=tk.LEFT)
 
-        self.render_revenue_tab(self.tab_revenue)
-        self.draw_ranking_charts(self.tab_ranking)
+        tk.Label(bar, text="Đến ngày:", bg="white").pack(side=tk.LEFT, padx=5)
+        self.e_end = tk.Entry(bar, width=12)
+        self.e_end.pack(side=tk.LEFT)
+        self.e_end.insert(0, datetime.now().strftime('%Y-%m-%d'))
+        tk.Button(bar, text="📅", command=lambda: self.open_calendar(self.e_end)).pack(side=tk.LEFT)
 
-    def render_revenue_tab(self, parent):
-        frame_top = tk.Frame(parent, bg="white")
-        frame_top.pack(side=tk.TOP, fill=tk.BOTH, expand=True, padx=10, pady=5)
+        tk.Button(bar, text="📊 Xem Báo Cáo", bg="#1976d2", fg="white", font=("Arial", 10, "bold"),
+                  command=self.load_data).pack(side=tk.LEFT, padx=20)
 
-        frame_bottom = tk.Frame(parent, bg="white")
-        frame_bottom.pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True, padx=10, pady=5)
+    def open_calendar(self, entry):
+        top = tk.Toplevel(self)
+        cal = Calendar(top, selectmode='day', date_pattern='y-mm-dd')
+        cal.pack()
+        tk.Button(top, text="Chọn",
+                  command=lambda: [entry.delete(0, tk.END), entry.insert(0, cal.get_date()), top.destroy()]).pack()
 
-        self.draw_daily_chart(frame_top)
-        self.draw_monthly_chart(frame_bottom)
+    def load_data(self):
+        try:
+            start = datetime.strptime(self.e_start.get(), '%Y-%m-%d').date()
+            end = datetime.strptime(self.e_end.get(), '%Y-%m-%d').date()
+        except:
+            messagebox.showerror("Lỗi", "Ngày không hợp lệ"); return
 
-    def draw_daily_chart(self, parent):
-        dates, revenues = self.controller.get_revenue_data()
+        # Xóa biểu đồ cũ
+        for tab in [self.tab_finance, self.tab_performance, self.tab_customer]:
+            for w in tab.winfo_children(): w.destroy()
 
-        fig, ax = plt.subplots(figsize=(8, 3.5), dpi=100)
+        # --- VẼ TAB 1: TÀI CHÍNH ---
+        self.draw_chart(self.tab_finance, self.controller.get_revenue_chart_data(start, end),
+                        "Doanh thu tổng hợp (VNĐ)", "bar", tk.TOP, (8, 3))
 
-        # Vẽ đường (Line chart)
-        ax.plot(dates, revenues, marker='o', linestyle='-', color='#2962ff', linewidth=2.5, markersize=6)
-        # Tô màu gradient bên dưới
-        ax.fill_between(dates, revenues, color='#2962ff', alpha=0.15)
+        frame_bot_1 = tk.Frame(self.tab_finance, bg="white");
+        frame_bot_1.pack(fill=tk.BOTH, expand=True)
+        self.draw_pie_chart(frame_bot_1, self.controller.get_revenue_structure(start, end),
+                            "Cơ cấu Doanh thu", ["Vé phim", "Bắp nước"], tk.LEFT)
 
-        ax.set_title("DOANH THU 7 NGÀY GẦN NHẤT", fontsize=11, fontweight='bold', color='#333')
-        ax.grid(True, linestyle='--', alpha=0.5)
+        self.draw_chart(frame_bot_1, self.controller.get_revenue_by_room(start, end),
+                        "Doanh thu theo Phòng chiếu", "barh", tk.RIGHT, (5, 3))
 
-        # Format trục Y (Tiền) cho dễ đọc
-        ax.yaxis.set_major_formatter(FuncFormatter(currency_formatter))
+        # --- VẼ TAB 2: HIỆU SUẤT ---
+        frame_top_2 = tk.Frame(self.tab_performance, bg="white");
+        frame_top_2.pack(fill=tk.BOTH, expand=True)
+        self.draw_chart(frame_top_2, [(d[0], d[2]) for d in self.controller.get_top_movies(start, end)],
+                        "Top Phim (Doanh thu)", "barh", tk.LEFT, (5, 3))
 
-        # HIỆN SỐ TIỀN TRÊN ĐẦU CÁC ĐIỂM
-        for i, txt in enumerate(revenues):
-            if txt > 0:  # Chỉ hiện nếu có doanh thu
-                ax.annotate(currency_formatter(txt, 0), (dates[i], revenues[i]),
-                            textcoords="offset points", xytext=(0, 8), ha='center', fontsize=9, color='blue')
+        self.draw_chart(frame_top_2, self.controller.get_top_products(start, end),
+                        "Top Sản phẩm (Số lượng)", "bar", tk.RIGHT, (5, 3))
 
-        # Chỉnh lề để không bị cắt chữ
-        plt.tight_layout()
+        # --- VẼ TAB 3: KHÁCH HÀNG & KHUNG GIỜ ---
+        for w in self.tab_customer.winfo_children(): w.destroy()
 
-        canvas = FigureCanvasTkAgg(fig, master=parent)
-        canvas.draw()
-        canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
+        # Khung chứa biểu đồ hàng trên
+        frame_top_3 = tk.Frame(self.tab_customer, bg="white")
+        frame_top_3.pack(fill=tk.BOTH, expand=True)
 
-    def draw_monthly_chart(self, parent):
-        months, revenues = self.controller.get_monthly_revenue()
+        # 1. Khung giờ vàng
+        golden_data = self.controller.get_golden_hours(start, end)
+        formatted_golden = [(f"{d[0]}h", d[1]) for d in golden_data]
+        self.draw_chart(frame_top_3, formatted_golden, "Khung giờ vàng (Lượng vé bán)", "line", tk.LEFT, (5, 3))
 
-        fig, ax = plt.subplots(figsize=(8, 3.5), dpi=100)
+        # 2. Tỷ lệ lấp đầy
+        occupancy_data = self.controller.get_occupancy_rate(start, end)
+        self.draw_chart(frame_top_3, occupancy_data, "Tỷ lệ lấp đầy theo Phim (%)", "bar", tk.RIGHT, (5,3))
 
-        # Vẽ cột (Bar chart)
-        bars = ax.bar(months, revenues, color='#ff9100', width=0.6, edgecolor='white')
+        # Khung chứa biểu đồ hàng dưới
+        frame_bot_3 = tk.Frame(self.tab_customer, bg="white")
+        frame_bot_3.pack(fill=tk.BOTH, expand=True)
 
-        ax.set_title("DOANH THU THEO THÁNG (Năm nay)", fontsize=11, fontweight='bold', color='#333')
-        ax.grid(axis='y', linestyle='--', alpha=0.5)
-        ax.yaxis.set_major_formatter(FuncFormatter(currency_formatter))
+        # 3. Khách thành viên (SỬA LẠI DÒNG NÀY)
+        mem_data = self.controller.get_customer_type_stats(start, end)
+        self.draw_pie_chart(frame_bot_3, mem_data, "Tỷ lệ khách hàng", ["Thành viên", "Vãng lai"], tk.TOP)
 
-        # HIỆN SỐ TIỀN TRÊN ĐẦU CỘT
-        for bar in bars:
-            height = bar.get_height()
-            if height > 0:
-                ax.text(bar.get_x() + bar.get_width() / 2., height,
-                        currency_formatter(height, 0),
-                        ha='center', va='bottom', fontsize=9, fontweight='bold', color='#e65100')
+    # --- HÀM VẼ TỔNG QUÁT (Giúp code gọn hơn) ---
+    def draw_chart(self, parent, data, title, kind, side, figsize):
+        if not data: return
+        labels = [str(d[0]) for d in data]
+        values = [d[1] for d in data]
 
-        plt.tight_layout()
+        fig = Figure(figsize=figsize, dpi=100)
+        ax = fig.add_subplot(111)
 
-        canvas = FigureCanvasTkAgg(fig, master=parent)
-        canvas.draw()
-        canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
+        # --- HÀM PHỤ: Đổi số thành chữ (1.000.000 -> 1M) ---
+        def currency_formatter(x, pos):
+            if x >= 1e9: return f'{x * 1e-9:.1f}B'  # Tỷ
+            if x >= 1e6: return f'{x * 1e-6:.1f}M'  # Triệu
+            if x >= 1e3: return f'{x * 1e-3:.0f}K'  # Nghìn
+            return f'{x:.0f}'
 
-    def draw_ranking_charts(self, parent):
-        # Tăng khoảng cách padding cho frame chứa để thoáng hơn
-        frame_movie = tk.Frame(parent, bg="white")
-        frame_movie.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(20, 10), pady=20)
+        # ---------------------------------------------------
 
-        frame_prod = tk.Frame(parent, bg="white")
-        frame_prod.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True, padx=(10, 20), pady=20)
+        if kind == "bar":
+            # Cột đứng (Doanh thu ngày, Top SP)
+            ax.bar(labels, values, color='#1976d2', width=0.5)
 
-        # --- 1. Top Phim (Biểu đồ Ngang) ---
-        m_titles, m_revenues = self.controller.get_top_movies()
+            # Áp dụng rút gọn cho trục Tiền (Trục dọc Y)
+            ax.yaxis.set_major_formatter(ticker.FuncFormatter(currency_formatter))
 
-        # Xử lý tên phim quá dài: Cắt bớt và thêm "..."
-        short_titles = [(t[:25] + '..') if len(t) > 25 else t for t in m_titles]
+            # Xoay chữ trục Ngang (Tên SP/Ngày)
+            ax.set_xticks(range(len(labels)))
+            ax.set_xticklabels(labels, rotation=30, ha='right', fontsize=9)
 
-        fig1, ax1 = plt.subplots(figsize=(5, 4), dpi=100)
+            # Chừa lề dưới cho tên dài
+            fig.subplots_adjust(bottom=0.3, left=0.15)
 
-        # Đảo ngược list để phim doanh thu cao nhất nằm trên cùng
-        y_pos = range(len(short_titles))
+        elif kind == "barh":
+            # Cột ngang (Top Phim, Doanh thu Phòng)
+            ax.barh(labels, values, color='#9c27b0')
 
-        # Vẽ thanh ngang (barh), màu xanh Teal hiện đại
-        bars1 = ax1.barh(y_pos, m_revenues, color='#00897B', height=0.6)
+            # Áp dụng rút gọn cho trục Tiền (Trục ngang X)
+            ax.xaxis.set_major_formatter(ticker.FuncFormatter(currency_formatter))
+            ax.tick_params(axis='y', labelsize=9)
 
-        ax1.set_yticks(y_pos)
-        ax1.set_yticklabels(short_titles, fontsize=9)
-        ax1.invert_yaxis()  # Đảo trục Y để số 1 lên đầu
+            # Chừa lề trái cho tên Phim dài
+            fig.subplots_adjust(left=0.35, bottom=0.15)
 
-        # Tiêu đề & Trục
-        ax1.set_title("TOP 5 PHIM DOANH THU CAO", fontsize=11, fontweight='bold', color='#333', pad=15)
-        ax1.xaxis.set_major_formatter(FuncFormatter(currency_formatter))
-        ax1.grid(axis='x', linestyle='--', alpha=0.3)  # Chỉ hiện lưới dọc mờ
+        elif kind == "line":
+            # Đường (Khung giờ)
+            ax.plot(labels, values, marker='o', color='#ff5722', linewidth=2)
+            ax.grid(True, linestyle='--')
 
-        # Xóa bớt khung viền (spines) cho thoáng
-        ax1.spines['top'].set_visible(False)
-        ax1.spines['right'].set_visible(False)
+            if len(labels) > 10:
+                ax.set_xticks(range(len(labels)))
+                ax.set_xticklabels(labels, rotation=30, ha='right', fontsize=8)
 
-        # Hiện số tiền bên phải thanh ngang
-        for i, v in enumerate(m_revenues):
-            ax1.text(v, i, f" {currency_formatter(v, 0)}",
-                     va='center', fontsize=9, fontweight='bold', color='#004D40')
+            fig.subplots_adjust(bottom=0.2)
 
-        plt.tight_layout()
-        canvas1 = FigureCanvasTkAgg(fig1, master=frame_movie)
-        canvas1.draw()
-        canvas1.get_tk_widget().pack(fill=tk.BOTH, expand=True)
+        ax.set_title(title, fontsize=10)
 
-        # --- 2. Top Sản phẩm (Chuyển sang Biểu đồ Ngang) ---
-        p_names, p_qty = self.controller.get_top_products()
+        FigureCanvasTkAgg(fig, master=parent).get_tk_widget().pack(side=side, fill=tk.BOTH, expand=True, padx=5, pady=5)
 
-        # Xử lý tên sản phẩm dài
-        short_p_names = [(n[:22] + '..') if len(n) > 22 else n for n in p_names]
-
-        fig2, ax2 = plt.subplots(figsize=(5, 4), dpi=100)
-        y_pos2 = range(len(short_p_names))
-
-        # Vẽ thanh ngang, màu Cam đậm (Warm color)
-        bars2 = ax2.barh(y_pos2, p_qty, color='#F57C00', height=0.6)
-
-        ax2.set_yticks(y_pos2)
-        ax2.set_yticklabels(short_p_names, fontsize=9)
-        ax2.invert_yaxis()  # Top 1 lên đầu
-
-        ax2.set_title("TOP 5 SẢN PHẨM BÁN CHẠY", fontsize=11, fontweight='bold', color='#333', pad=15)
-        ax2.grid(axis='x', linestyle='--', alpha=0.3)
-
-        # Xóa khung viền thừa
-        ax2.spines['top'].set_visible(False)
-        ax2.spines['right'].set_visible(False)
-
-        # Hiện số lượng bên phải
-        for i, v in enumerate(p_qty):
-            ax2.text(v, i, f" {int(v)}",
-                     va='center', fontsize=9, fontweight='bold', color='#E65100')
-
-        plt.tight_layout()
-        canvas2 = FigureCanvasTkAgg(fig2, master=frame_prod)
-        canvas2.draw()
-        canvas2.get_tk_widget().pack(fill=tk.BOTH, expand=True)
+    def draw_pie_chart(self, parent, data, title, labels, side):
+        if sum(data) == 0: return
+        fig = Figure(figsize=(4, 3), dpi=100)
+        ax = fig.add_subplot(111)
+        ax.pie(data, labels=labels, autopct='%1.1f%%', startangle=90, colors=['#4caf50', '#ff9800'])
+        ax.set_title(title, fontsize=10)
+        FigureCanvasTkAgg(fig, master=parent).get_tk_widget().pack(side=side, fill=tk.BOTH, expand=True, padx=5, pady=5)
