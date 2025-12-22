@@ -7,7 +7,8 @@ from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.graphics.barcode import code128
 from reportlab.graphics import renderPDF
-
+import textwrap
+from reportlab.pdfgen import canvas
 
 def print_ticket_pdf(data):
     # --- CẤU HÌNH ĐƯỜNG DẪN LƯU FILE ---
@@ -61,16 +62,34 @@ def print_ticket_pdf(data):
 
     y -= 6 * mm
     c.setFont(font_main, 9)
-    c.drawCentredString(page_width / 2, y, f"Format: {data.get('format', '2D')}")
-
-    y -= 12 * mm
-    c.setFont(font_bold, 18)
-    c.drawString(5 * mm, y, f"Ghe: {data.get('seat', '')}")
+    # IN FORMAT VÀ PHÒNG CÙNG 1 DÒNG (Dòng này ít khi bị tràn)
+    c.drawString(5 * mm, y, f"Format: {data.get('format', '2D')}")
+    c.setFont(font_bold, 12)
     c.drawRightString(page_width - 5 * mm, y, f"Phong: {data.get('room', '')}")
 
-    y -= 8 * mm
+    # --- XỬ LÝ IN GHẾ (TỰ ĐỘNG XUỐNG DÒNG) ---
+    y -= 10 * mm
+    seat_string = f"Ghe: {data.get('seat', '')}"
+
+    c.setFont(font_bold, 16)  # Font to cho rõ
+
+    # Sử dụng textwrap để cắt chuỗi nếu quá dài
+    # width=22: Ước lượng khoảng 22 ký tự sẽ vừa chiều ngang tờ vé 80mm với font size 16
+    # Bạn có thể tăng giảm số 22 này tùy vào font chữ thực tế
+    wrapped_lines = textwrap.wrap(seat_string, width=22)
+
+    for line in wrapped_lines:
+        c.drawString(5 * mm, y, line)
+        y -= 7 * mm  # Mỗi dòng ghế cách nhau 7mm
+
+    # --- CÁC PHẦN DƯỚI (NGÀY, GIỜ...) ---
+    # Lưu ý: Vì số dòng ghế thay đổi, biến y đã tự động giảm xuống
+    # nên các phần dưới sẽ tự động được đẩy xuống theo, không bị đè.
+
+    y -= 5 * mm  # Khoảng cách đệm thêm trước khi in Ngày
     c.setFont(font_main, 10)
     c.drawString(5 * mm, y, f"Ngay: {data.get('date', '')}")
+
     y -= 5 * mm
     c.drawString(5 * mm, y, f"Suat: {data.get('time', '')}")
 
