@@ -42,7 +42,7 @@ class CinemaApp:
         self.menu_data = [
             ("Quản lí phim", "🎬"),
             ("Quản lí suất chiếu", "🎞"),
-            # ("Quản lí phòng chiếu", "🏢"),
+            ("Quản lí phòng chiếu", "🏢"),
             ("Quản lí sản phẩm", "🥤"),
             ("Quản lí nhân sự", "👥"),
             ("Quản lí khách hàng", "👨‍👩‍👧"),
@@ -122,8 +122,8 @@ class CinemaApp:
             MovieManager(self.body_frame)
         elif page_name == "Quản lí suất chiếu":
             ShowtimeManager(self.body_frame)
-        # elif page_name == "Quản lí phòng chiếu":
-        #     RoomManager(self.body_frame)
+        elif page_name == "Quản lí phòng chiếu":
+            RoomManager(self.body_frame)
         elif page_name == "Quản lí sản phẩm":
             ProductManager(self.body_frame)
         elif page_name == "Quản lí nhân sự":
