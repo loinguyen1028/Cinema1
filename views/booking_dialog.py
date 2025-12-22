@@ -386,20 +386,43 @@ class BookingDialog(tk.Toplevel):
                 list(self.selected_seats),
                 self.final_total_amount
             )
+
             if success:
+                seller_name = self.controller.get_user_name(self.user_id)
+                # 1. Tạo chuỗi ghế hiển thị
                 seat_labels = ", ".join(
                     d["lbl"] for d in self.seat_objects.values() if d["selected"]
                 )
 
+                # 2. Trích xuất Ticket ID từ msg (vì controller trả về "Thanh toán thành công! Mã vé: XXX")
+                import re
+                ticket_id = "UNKNOWN"
+                match = re.search(r"Mã vé:\s*(\d+)", msg)
+                if match:
+                    ticket_id = match.group(1)
+
+                # 3. Đóng gói dữ liệu để in vé
+                ticket_data = {
+                    "movie_name": self.st.movie.title,
+                    "format": "2D/Digital",  # Hoặc lấy từ self.st.room.room_type nếu có
+                    "room": self.st.room.room_name,
+                    "seat": seat_labels,
+                    "date": self.st.start_time.strftime("%d/%m/%Y"),
+                    "time": self.st.start_time.strftime("%H:%M"),
+                    "price": int(self.final_total_amount),
+                    "ticket_id": ticket_id,
+                    "seller": seller_name
+                }
+
+                # 4. Mở Dialog thành công và truyền dữ liệu vé sang
                 TicketSuccessDialog(
                     self,
                     total_amount=self.final_total_amount,
                     seat_labels=seat_labels,
-                    on_close=self.destroy
+                    on_close=self.destroy,
+                    ticket_data=ticket_data  # <--- TRUYỀN DỮ LIỆU VÀO ĐÂY
                 )
             else:
                 messagebox.showerror("Lỗi", msg)
-
-
 
         PaymentConfirmDialog(self, self.final_total_amount, on_confirm=do_pay)

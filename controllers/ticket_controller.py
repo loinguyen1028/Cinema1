@@ -1,4 +1,6 @@
 from services.ticket_service import TicketService
+from models import User
+from db import db
 
 class TicketController:
     def __init__(self):
@@ -36,3 +38,20 @@ class TicketController:
 
     def cancel_ticket(self, ticket_id):
         return self.service.cancel_ticket(ticket_id)
+
+    def get_user_name(self, user_id):
+        """Lấy tên nhân viên bán vé theo ID"""
+        if not user_id:
+            return "Unknown"
+
+        session = db.get_session()
+        try:
+            user = session.query(User).get(user_id)
+            # Giả sử bảng User của bạn có cột 'name' hoặc 'fullname'
+            # Nếu cột tên là 'username', hãy sửa thành user.username
+            return user.username if user else "Unknown"
+        except Exception as e:
+            print(f"Lỗi lấy tên user: {e}")
+            return "Error"
+        finally:
+            session.close()
