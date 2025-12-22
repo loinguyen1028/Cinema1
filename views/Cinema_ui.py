@@ -20,11 +20,13 @@ class CinemaApp:
         self.root.geometry("1300x750")
 
         self.colors = {
-            "sidebar_bg": "#0f1746",
-            "content_bg": "#f0f2f5",
+            "sidebar_bg": "#0b0b0b",  # Đen sâu
+            "content_bg": "#121212",  # Đen xám nhẹ
             "text_white": "#ffffff",
-            "active_orange": "#ff9800",
-            "header_bg": "#0f1746"
+            "active_orange": "#f5c518",  # Vàng cinema (IMDb gold)
+            "header_bg": "#0b0b0b",
+            "hover_bg": "#1f1f1f",  # Hover sidebar
+            "muted_text": "#b0b0b0"
         }
 
         self.sidebar_frame = tk.Frame(root, bg=self.colors["sidebar_bg"], width=250)
@@ -60,9 +62,22 @@ class CinemaApp:
         user_frame = tk.Frame(header, bg=self.colors["header_bg"])
         user_frame.pack(side=tk.RIGHT, padx=20, pady=10)
 
-        tk.Label(user_frame, text="👤", font=("Arial", 18), bg="white", fg="#333", width=2).pack(side=tk.LEFT, padx=10)
-        tk.Label(user_frame, text="Admin", bg=self.colors["header_bg"], fg="white", font=("Arial", 10)).pack(
-            side=tk.LEFT, padx=5)
+        tk.Label(
+            user_frame,
+            text="👤",
+            font=("Arial", 16),
+            bg="#1c1c1c",
+            fg=self.colors["active_orange"],
+            width=2
+        ).pack(side=tk.LEFT, padx=10)
+
+        tk.Label(
+            user_frame,
+            text="Admin",
+            bg=self.colors["header_bg"],
+            fg=self.colors["muted_text"],
+            font=("Arial", 10, "bold")
+        ).pack(side=tk.LEFT, padx=5)
 
         lbl_more = tk.Label(user_frame, text="⋮", bg=self.colors["header_bg"], fg="white",
                             font=("Arial", 14, "bold"), cursor="hand2")
@@ -89,7 +104,7 @@ class CinemaApp:
             messagebox.showerror("Lỗi", "Không xác định được tài khoản người dùng!")
 
     def create_sidebar(self):
-        # (Giữ nguyên code cũ của bạn)
+
         logo_frame = tk.Frame(self.sidebar_frame, bg=self.colors["sidebar_bg"], height=80)
         logo_frame.pack(fill=tk.X, pady=20)
         tk.Label(logo_frame, text="🎬", font=("Arial", 30), bg=self.colors["sidebar_bg"], fg="#5c9aff").pack(
@@ -100,6 +115,15 @@ class CinemaApp:
         for name, icon in self.menu_data:
             btn_frame = tk.Frame(self.sidebar_frame, bg=self.colors["sidebar_bg"], cursor="hand2")
             btn_frame.pack(fill=tk.X, pady=5, padx=10)
+
+            def on_enter(e, frame=btn_frame):
+                frame.config(bg=self.colors["hover_bg"])
+
+            def on_leave(e, frame=btn_frame):
+                frame.config(bg=self.colors["sidebar_bg"])
+
+            btn_frame.bind("<Enter>", on_enter)
+            btn_frame.bind("<Leave>", on_leave)
 
             lbl_icon = tk.Label(btn_frame, text=icon, bg=self.colors["sidebar_bg"], fg="white", font=("Arial", 14))
             lbl_icon.pack(side=tk.LEFT, padx=(10, 10), pady=10)
@@ -136,12 +160,13 @@ class CinemaApp:
             self.render_empty_page(page_name)
 
     def update_sidebar_visuals(self, active_page):
-        # (Giữ nguyên code cũ)
         for name, (frame, icon, text) in self.menu_buttons.items():
             if name == active_page:
+                frame.config(bg="#1f1f1f")
                 icon.config(fg=self.colors["active_orange"])
                 text.config(fg=self.colors["active_orange"])
             else:
+                frame.config(bg=self.colors["sidebar_bg"])
                 icon.config(fg=self.colors["text_white"])
                 text.config(fg=self.colors["text_white"])
 
