@@ -348,6 +348,16 @@ class BookingDialog(tk.Toplevel):
         self.update_total()
 
     def on_type_change(self, event):
+        cust_type = self.cbo_type.get()
+
+        # 2. Nếu là Sinh viên hoặc Trẻ em -> Gọi Controller lấy % giảm giá
+        if cust_type in ["Sinh viên", "Trẻ em"]:
+            # Hàm này sẽ gọi xuống Service để lấy mức giảm (ví dụ 0.2 hoặc 0.5)
+            self.special_discount_percent = self.controller.get_special_discount(cust_type)
+        else:
+            # Nếu chọn lại "Người lớn" thì reset về 0
+            self.special_discount_percent = 0.0
+
         self.update_total()
 
     def check_member(self):
@@ -359,19 +369,56 @@ class BookingDialog(tk.Toplevel):
         self.update_total()
 
     def update_total(self):
+        # 1. Tính tiền vé
         ticket_total = len(self.selected_seats) * float(self.st.ticket_price)
-        food_total = sum(float(v["obj"].price) * v["qty"]
-                         for v in self.selected_products.values()) if self.selected_products else 0
+
+        # 2. Tính tiền bắp nước
+        food_total = 0
+        food_text_list = []
+
+        if self.selected_products:
+            for v in self.selected_products.values():
+                food_total += float(v["obj"].price) * v["qty"]
+                p_name = getattr(v["obj"], "name", "Món")
+                # Thêm dấu gạch đầu dòng cho đẹp
+                food_text_list.append(f"- {v['qty']}x {p_name}")
+
+            # ===> SỬA: Dùng xuống dòng (\n) thay vì dấu phẩy
+            food_display_str = "\n".join(food_text_list)
+        else:
+            food_display_str = "Chưa chọn món"
 
         subtotal = ticket_total + food_total
-        discount = subtotal * self.member_discount_percent
+
+        # ===> ĐOẠN SỬA ĐỔI QUAN TRỌNG <===
+        # So sánh giữa Giảm giá thành viên (SĐT) và Giảm giá đối tượng (SV/Trẻ em)
+        # Cái nào cao hơn thì lấy cái đó (Tránh cộng dồn lỗ vốn)
+        # Ví dụ: Thành viên giảm 5%, nhưng Sinh viên giảm 20% -> Lấy 20%
+        final_discount_percent = max(self.member_discount_percent, self.special_discount_percent)
+
+        discount = subtotal * final_discount_percent
         final = subtotal - discount
         self.final_total_amount = final
+        # =================================
 
+        # Cập nhật giao diện
         seats = [d["lbl"] for d in self.seat_objects.values() if d["selected"]]
         self.lbl_seat_list.config(text=f"Ghế: {', '.join(seats)}")
+
+        self.lbl_food_list.config(text=food_display_str, wraplength=300, justify="left")
+
         self.lbl_subtotal.config(text=f"Tạm tính: {int(subtotal):,} đ")
-        self.lbl_discount.config(text=f"Giảm giá: -{int(discount):,} đ" if discount else "")
+
+        # Hiển thị rõ giảm bao nhiêu tiền và bao nhiêu %
+        if discount > 0:
+            percent_text = int(final_discount_percent * 100)
+            self.lbl_discount.config(
+                text=f"Giảm giá: -{int(discount):,} đ ({percent_text}%)",
+                fg="lightgreen"
+            )
+        else:
+            self.lbl_discount.config(text="")
+
         self.lbl_total.config(text=f"TỔNG: {int(final):,} VND")
 
     def on_payment(self):
@@ -388,39 +435,51 @@ class BookingDialog(tk.Toplevel):
             )
 
             if success:
+                # 1. Lấy tên người bán
                 seller_name = self.controller.get_user_name(self.user_id)
-                # 1. Tạo chuỗi ghế hiển thị
+
+                # 2. Tạo chuỗi ghế
                 seat_labels = ", ".join(
                     d["lbl"] for d in self.seat_objects.values() if d["selected"]
                 )
 
-                # 2. Trích xuất Ticket ID từ msg (vì controller trả về "Thanh toán thành công! Mã vé: XXX")
+                # 3. Lấy Ticket ID từ thông báo
                 import re
                 ticket_id = "UNKNOWN"
                 match = re.search(r"Mã vé:\s*(\d+)", msg)
                 if match:
                     ticket_id = match.group(1)
 
-                # 3. Đóng gói dữ liệu để in vé
+                # 4. Tạo chuỗi danh sách Bắp/Nước
+                food_str_for_print = ""
+                if self.selected_products:
+                    items = []
+                    for v in self.selected_products.values():
+                        p_name = getattr(v["obj"], "name", "Món")
+                        items.append(f"{v['qty']}x {p_name}")
+                    food_str_for_print = ", ".join(items)
+                # ============================
+
+                # 5. Đóng gói dữ liệu in vé
                 ticket_data = {
                     "movie_name": self.st.movie.title,
-                    "format": "2D/Digital",  # Hoặc lấy từ self.st.room.room_type nếu có
+                    "format": "2D/Digital",
                     "room": self.st.room.room_name,
                     "seat": seat_labels,
                     "date": self.st.start_time.strftime("%d/%m/%Y"),
                     "time": self.st.start_time.strftime("%H:%M"),
                     "price": int(self.final_total_amount),
                     "ticket_id": ticket_id,
-                    "seller": seller_name
+                    "seller": seller_name,
+                    "food": food_str_for_print
                 }
 
-                # 4. Mở Dialog thành công và truyền dữ liệu vé sang
                 TicketSuccessDialog(
                     self,
                     total_amount=self.final_total_amount,
                     seat_labels=seat_labels,
                     on_close=self.destroy,
-                    ticket_data=ticket_data  # <--- TRUYỀN DỮ LIỆU VÀO ĐÂY
+                    ticket_data=ticket_data
                 )
             else:
                 messagebox.showerror("Lỗi", msg)

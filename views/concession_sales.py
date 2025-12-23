@@ -4,8 +4,10 @@ from PIL import Image, ImageTk
 import os
 from controllers.product_controller import ProductController
 from controllers.customer_controller import CustomerController
+from controllers.ticket_controller import TicketController
 from views.payment_dialog import PaymentConfirmDialog
-
+from datetime import datetime
+from utils.ticket_printer import print_ticket_pdf
 
 class ConcessionSales:
     def __init__(self, parent_frame, user_id):
@@ -328,8 +330,47 @@ class ConcessionSales:
 
             if success:
                 messagebox.showinfo("Thành công", msg)
+
+                # --- ĐOẠN CODE MỚI ĐỂ IN HÓA ĐƠN ---
+                try:
+                    # 1. Lấy mã hóa đơn (msg trả về "Thanh toán thành công! Mã vé: 123")
+                    import re
+                    ticket_id = "UNKNOWN"
+                    match = re.search(r"Mã vé:\s*(\d+)", msg)
+                    if match: ticket_id = match.group(1)
+
+                    # 2. Tạo chuỗi món ăn (ngang, cách nhau dấu phẩy)
+                    items_str = []
+                    for pid, item in self.cart.items():
+                        items_str.append(f"{item['qty']}x {item['obj'].name}")
+                    food_str = ", ".join(items_str)
+
+                    # 3. Lấy tên nhân viên
+                    # Mẹo: Dùng tạm TicketController để tra tên user
+                    tc = TicketController()
+                    seller_name = tc.get_user_name(self.user_id)
+
+                    # 4. Đóng gói dữ liệu in
+                    # QUAN TRỌNG: Không truyền 'movie_name' để máy in biết đây là hóa đơn lẻ
+                    bill_data = {
+                        "ticket_id": ticket_id,
+                        "date": datetime.now().strftime("%d/%m/%Y"),
+                        "time": datetime.now().strftime("%H:%M"),
+                        "price": int(self.final_total),
+                        "seller": seller_name,
+                        "food": food_str,
+                        "movie_name": None  # <--- Đánh dấu là không có phim
+                    }
+
+                    # 5. Gọi in
+                    print_ticket_pdf(bill_data)
+
+                except Exception as e:
+                    print(f"Lỗi in hóa đơn: {e}")
+                # -----------------------------------
+
                 self.cart = {}  # Reset
-                self.on_cust_type_change(None)  # Reset khách
+                self.on_cust_type_change(None)
                 self.update_cart_ui()
             else:
                 messagebox.showerror("Lỗi", msg)

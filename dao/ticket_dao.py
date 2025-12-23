@@ -128,24 +128,21 @@ class TicketDAO:
             session.close()
 
     def create_concession_transaction(self, user_id, total_amount, products_list, customer_id=None):
-        """
-        Tạo hóa đơn chỉ có bắp nước (không có suất chiếu/ghế)
-        """
         session = db.get_session()
         try:
-            # 1. Tạo Ticket (Hóa đơn)
-            # Lưu ý: showtime_id để NULL (None)
+            # 1. Tạo Ticket
             new_ticket = Ticket(
                 user_id=user_id,
                 customer_id=customer_id,
-                showtime_id=None,  # Quan trọng: Không gắn với suất chiếu
+                showtime_id=None,
                 booking_time=datetime.now(),
-                total_amount=total_amount
+                total_amount=total_amount,
+                status='booked',
             )
             session.add(new_ticket)
-            session.flush()  # Để lấy ticket_id
+            session.flush()
 
-            # 2. Lưu chi tiết sản phẩm (TicketProduct)
+            # 2. Lưu sản phẩm
             for pid, qty, price in products_list:
                 tp = TicketProduct(
                     ticket_id=new_ticket.ticket_id,
@@ -156,10 +153,11 @@ class TicketDAO:
                 session.add(tp)
 
             session.commit()
-            return True
+            return True, f"Thanh toán thành công! Mã vé: {new_ticket.ticket_id}"
+
         except Exception as e:
             session.rollback()
             print(f"Lỗi tạo hóa đơn bắp nước: {e}")
-            return False
+            return False, f"Lỗi: {str(e)}"
         finally:
             session.close()
