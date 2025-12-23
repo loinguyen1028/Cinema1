@@ -5,6 +5,13 @@ from datetime import datetime
 from .base import Base
 
 
+class MembershipTier(Base):
+    __tablename__ = 'membership_tiers'
+    id = Column(Integer, primary_key=True)
+    tier_name = Column(String(50), nullable=False)
+    min_point = Column(Integer, default=0)
+    discount_percent = Column(Numeric(5, 2), default=0)
+
 class Customer(Base):
     __tablename__ = 'customers'
     customer_id = Column(Integer, primary_key=True)
@@ -12,9 +19,17 @@ class Customer(Base):
     phone = Column(String(20), unique=True)
     email = Column(String(100))
     created_at = Column(DateTime, default=datetime.now)
+
+    # --- CÁC CỘT MỚI ---
+    points = Column(Integer, default=0)
+    tier_id = Column(Integer, ForeignKey('membership_tiers.id'))
+
+    # Giữ lại extra_info cho dob (ngày sinh), nhưng không lưu points/level nữa
     extra_info = Column(JSONB)
     is_active = Column(Boolean, default=True)
 
+    # Relationship để lấy thông tin hạng
+    tier = relationship("MembershipTier")
     tickets = relationship("Ticket", back_populates="customer")
 
 

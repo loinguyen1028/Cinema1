@@ -99,13 +99,17 @@ class CustomerDialog(tk.Toplevel):
 
             self.e_points.config(state='normal')
             self.e_points.delete(0, tk.END)
-            self.e_points.insert(0, str(extra.get("points", 0)))
-            # 2. Khóa lại ngay lập tức (Read-only)
+
+            # --- SỬA ĐOẠN NÀY ---
+            # Lấy từ cột points
+            self.e_points.insert(0, str(cus.points))
             self.e_points.config(state='readonly')
 
-            # Hạng thành viên cũng khóa (vì nó tự động nhảy theo điểm)
+            # Hạng thành viên
             self.cbo_level.config(state='normal')
-            self.cbo_level.set(extra.get("level", "Thân thiết"))
+            # Lấy tên hạng từ relationship
+            tier_name = cus.tier.tier_name if cus.tier else "Thân thiết"
+            self.cbo_level.set(tier_name)
             self.cbo_level.config(state='disabled')
 
     def save_action(self):

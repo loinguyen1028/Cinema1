@@ -214,26 +214,29 @@ class ConcessionSales:
         phone = self.e_phone.get().strip()
         if not phone: return
 
-        # Gọi controller tìm khách
-        # Giả sử controller có hàm get_by_phone trả về object Customer
         cus = self.cust_controller.get_by_phone(phone)
 
         if cus:
             self.current_customer = cus
-            extra = cus.extra_info if cus.extra_info else {}
-            level = extra.get("level", "Thân thiết")
 
-            # Logic giảm giá theo hạng
-            if level == "Kim cương":
-                self.discount_percent = 0.15  # 15%
-            elif level == "Vàng":
-                self.discount_percent = 0.10  # 10%
-            elif level == "Bạc":
-                self.discount_percent = 0.05  # 5%
+            # --- CODE MỚI: Lấy thông tin từ quan hệ bảng tier ---
+            if cus.tier:
+                level_name = cus.tier.tier_name
+                # Database lưu số nguyên (ví dụ 10 nghĩa là 10%) -> chia 100
+                # Hoặc nếu lưu 0.1 thì không cần chia.
+                # Ở các bước trước bạn lưu 5, 10 -> nên chia 100.
+                self.discount_percent = float(cus.tier.discount_percent) / 100
             else:
+                level_name = "Chưa xếp hạng"
                 self.discount_percent = 0.0
+            # ----------------------------------------------------
 
-            self.lbl_cust_info.config(text=f"{cus.name} - {level} (-{int(self.discount_percent * 100)}%)", fg="green")
+            # Hiển thị
+            discount_display = int(self.discount_percent * 100)
+            self.lbl_cust_info.config(
+                text=f"{cus.name} - {level_name} (-{discount_display}%)",
+                fg="green"
+            )
         else:
             self.discount_percent = 0.0
             self.lbl_cust_info.config(text="Không tìm thấy khách hàng!", fg="red")

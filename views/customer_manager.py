@@ -71,11 +71,14 @@ class CustomerManager:
 
         action_icons = "✏  🗑"
         for cus in customers:
-            # Lấy thông tin từ JSON extra_info
             extra = cus.extra_info if cus.extra_info else {}
             dob = extra.get("dob", "")
-            points = extra.get("points", 0)
-            level = extra.get("level", "Thân thiết")
+
+            points = cus.points
+
+            # Lấy tên hạng qua relationship (cần xử lý nếu tier bị Null)
+            level = cus.tier.tier_name if cus.tier else "Chưa xếp hạng"
+            # --------------------
 
             created = cus.created_at.strftime("%d/%m/%Y") if cus.created_at else ""
 

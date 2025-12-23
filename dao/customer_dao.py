@@ -1,7 +1,7 @@
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError, DataError, OperationalError
 from db import db
-from models import Customer
-
+from models import Customer, MembershipTier
+from sqlalchemy.orm import joinedload
 
 class CustomerDAO:
     # -----------------------------------------------------
@@ -10,7 +10,11 @@ class CustomerDAO:
     def get_all(self):
         session = db.get_session()
         try:
-            return session.query(Customer).filter_by(is_active=True).order_by(Customer.customer_id.desc()).all()
+            return session.query(Customer) \
+                .options(joinedload(Customer.tier)) \
+                .filter_by(is_active=True) \
+                .order_by(Customer.customer_id.desc()) \
+                .all()
         except Exception:
             return []
         finally:
@@ -19,7 +23,10 @@ class CustomerDAO:
     def get_by_phone(self, phone):
         session = db.get_session()
         try:
-            return session.query(Customer).filter_by(phone=phone).first()
+            return session.query(Customer) \
+                .options(joinedload(Customer.tier)) \
+                .filter_by(phone=phone) \
+                .first()
         except Exception:
             return None
         finally:
@@ -28,7 +35,10 @@ class CustomerDAO:
     def get_by_id(self, customer_id):
         session = db.get_session()
         try:
-            return session.query(Customer).get(customer_id)
+            return session.query(Customer) \
+                .options(joinedload(Customer.tier)) \
+                .filter_by(customer_id=customer_id) \
+                .first()
         except Exception:
             return None
         finally:
@@ -46,18 +56,19 @@ class CustomerDAO:
         finally:
             session.close()
 
+    def get_tier_id_by_points(self, session, points):
+        # Tìm hạng cao nhất mà điểm hiện tại đáp ứng được
+        tier = session.query(MembershipTier) \
+            .filter(MembershipTier.min_point <= points) \
+            .order_by(MembershipTier.min_point.desc()) \
+            .first()
+        return tier.id if tier else 1  # Mặc định ID 1 nếu không tìm thấy
     # -----------------------------------------------------
     # CÁC HÀM TÁC ĐỘNG DỮ LIỆU (ADD / UPDATE / DELETE)
     # -----------------------------------------------------
     def add(self, name, phone, email, dob, points, level):
         session = db.get_session()
         try:
-            # =================================================
-            # BƯỚC 1: KIỂM TRA THỦ CÔNG (MANUAL CHECK)
-            # =================================================
-
-            # 1. Kiểm tra trùng Số điện thoại
-            # (Vì SĐT là bắt buộc và duy nhất)
             if session.query(Customer).filter_by(phone=phone).first():
                 return False, f"Số điện thoại {phone} đã tồn tại trong hệ thống!"
 
@@ -69,13 +80,19 @@ class CustomerDAO:
                 if exists_email:
                     return False, f"Email '{email}' đã được sử dụng bởi khách hàng khác!"
 
-            extra = {
-                "dob": dob,
-                "points": int(points) if str(points).isdigit() else 0,
-                "level": level
-            }
+            points_val = int(points) if str(points).isdigit() else 0
 
-            new_cus = Customer(name=name, phone=phone, email=email, extra_info=extra)
+            # TỰ ĐỘNG TÍNH HẠNG
+            tier_id = self.get_tier_id_by_points(session, points_val)
+
+            extra = {"dob": dob}
+
+            new_cus = Customer(
+                name=name, phone=phone, email=email,
+                points=points_val,
+                tier_id=tier_id,
+                extra_info=extra
+            )
             session.add(new_cus)
             session.commit()
 
@@ -123,10 +140,15 @@ class CustomerDAO:
             cus.phone = phone
             cus.email = email
 
+            points_val = int(points) if str(points).isdigit() else 0
+            cus.points = points_val
+            cus.tier_id = self.get_tier_id_by_points(session, points_val)
+
             extra = dict(cus.extra_info) if cus.extra_info else {}
             extra["dob"] = dob
-            extra["points"] = int(points) if str(points).isdigit() else 0
-            extra["level"] = level
+            extra.pop("points", None)
+            extra.pop("level", None)
+
             cus.extra_info = extra
 
             session.commit()
@@ -164,29 +186,16 @@ class CustomerDAO:
         try:
             cus = session.query(Customer).get(customer_id)
             if cus:
-                # 10k = 1 điểm
                 points_added = int(amount_paid / 10000)
 
-                current_info = dict(cus.extra_info) if cus.extra_info else {}
-                current_points = current_info.get("points", 0)
+                cus.points += points_added
 
-                new_points = current_points + points_added
+                new_tier_id = self.get_tier_id_by_points(session, cus.points)
+                cus.tier_id = new_tier_id
 
-                # Logic thăng hạng
-                new_level = "Thân thiết"
-                if new_points >= 2000:
-                    new_level = "Kim cương"
-                elif new_points >= 1000:
-                    new_level = "Vàng"
-                elif new_points >= 500:
-                    new_level = "Bạc"
-
-                current_info["points"] = new_points
-                current_info["level"] = new_level
-
-                cus.extra_info = current_info
+                tier_name = session.query(MembershipTier.tier_name).filter_by(id=new_tier_id).scalar()
                 session.commit()
-                return True, f"Cộng {points_added} điểm. Hạng: {new_level}"
+                return True, f"Cộng {points_added} điểm. Hạng hiện tại: {tier_name}"
             return False, "Khách hàng không tồn tại"
         except Exception as e:
             session.rollback()

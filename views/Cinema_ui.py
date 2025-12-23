@@ -7,6 +7,7 @@ from views.customer_manager import CustomerManager
 from views.room_manager import RoomManager
 from views.change_password_dialog import ChangePasswordDialog
 from views.product_manager import ProductManager
+from  views.tier_manager import TierManager
 from views.stat_manager import StatManager
 
 class CinemaApp:
@@ -48,6 +49,7 @@ class CinemaApp:
             ("Quản lí sản phẩm", "🥤"),
             ("Quản lí nhân sự", "👥"),
             ("Quản lí khách hàng", "👨‍👩‍👧"),
+            ("Quản lí hạng", "👨‍👩‍👧"),
             ("Thống kê", "📊"),
         ]
 
@@ -154,6 +156,8 @@ class CinemaApp:
             StaffManager(self.body_frame)
         elif page_name == "Quản lí khách hàng":
             CustomerManager(self.body_frame)
+        elif page_name == "Quản lí hạng":
+            TierManager(self.body_frame)
         elif page_name == "Thống kê":
             StatManager(self.body_frame)
         else:

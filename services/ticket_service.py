@@ -17,7 +17,6 @@ class TicketService:
         grouped = {}
         for st in all_showtimes:
             m = st.movie
-            # Filter keyword & genre logic here...
             if keyword and keyword.lower() not in m.title.lower(): continue
             m_genre = m.extra_info.get('genre', '') if m.extra_info else ""
             if genre != "Tất cả" and genre not in m_genre: continue
@@ -39,11 +38,10 @@ class TicketService:
     def search_tickets(self, kw):
         return self.ticket_dao.search_tickets(kw)
 
-    # --- Logic Nghiệp vụ ---
+    # --- Logic Nghiệp vụ (ĐÃ SỬA) ---
 
     def calculate_discount(self, customer_phone, type_selection):
-        """Tính toán giảm giá dựa trên SĐT và loại khách"""
-        # 1. Giảm giá đặc biệt (Sinh viên/Trẻ em)
+        # 1. Giảm giá đặc biệt (Sinh viên, Trẻ em...) - Giữ nguyên hardcode hoặc tách bảng riêng sau này
         special_rates = {"Sinh viên": 0.20, "Trẻ em": 0.30, "Người cao tuổi": 0.20}
         special_percent = special_rates.get(type_selection, 0.0)
 
@@ -53,18 +51,25 @@ class TicketService:
 
         # 2. Check thành viên
         if customer_phone:
+            # Lưu ý: Hàm get_by_phone trong DAO phải có .options(joinedload(Customer.tier))
             customer = self.customer_dao.get_by_phone(customer_phone)
-            if customer:
-                extra = customer.extra_info if customer.extra_info else {}
-                level = extra.get("level", "Thân thiết")
-                mem_rates = {"Thân thiết": 0.05, "Bạc": 0.10, "Vàng": 0.15, "Kim cương": 0.20}
-                member_percent = mem_rates.get(level, 0)
-                msg = f"Thành viên: {customer.name} ({level})"
-            else:
-                msg = "Khách vãng lai"
 
-        # Quyết định dùng giảm giá nào (Ưu tiên cái cao hơn hoặc cộng dồn tùy chính sách)
-        # Ở đây ví dụ ưu tiên Special nếu có, không thì lấy Member
+            if customer:
+                # --- LOGIC MỚI: Lấy từ bảng membership_tiers ---
+                if customer.tier:
+                    # Database lưu số, ví dụ 5.00 (là 5%) -> Chia 100 để ra 0.05
+                    member_percent = float(customer.tier.discount_percent) / 100
+                    level_name = customer.tier.tier_name
+                else:
+                    member_percent = 0.0
+                    level_name = "Chưa xếp hạng"
+                # -----------------------------------------------
+
+                msg = f"Thành viên: {customer.name} ({level_name})"
+            else:
+                msg = "Khách vãng lai (SĐT không tồn tại)"
+
+        # 3. Quyết định dùng giảm giá nào (Lấy cái cao nhất)
         final_percent = max(special_percent, member_percent)
 
         return customer, final_percent, msg
@@ -96,5 +101,4 @@ class TicketService:
         return success, msg
 
     def cancel_ticket(self, ticket_id):
-        # Có thể thêm logic: Không cho hủy nếu vé đã in hoặc phim đã chiếu
         return self.ticket_dao.delete_ticket(ticket_id)
