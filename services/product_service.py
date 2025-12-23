@@ -33,22 +33,7 @@ class ProductService:
 
     # Xử lý bán hàng trực tiếp (Đồ ăn)
     def process_direct_sale(self, user_id, total_amount, products_list, customer_id=None):
-        if not products_list:
-            return False, "Giỏ hàng trống!"
-
-        try:
-            success = self.ticket_dao.create_concession_transaction(user_id, total_amount, products_list, customer_id)
-
-            if success:
-                if customer_id:
-                    self.customer_dao.update_membership(customer_id, total_amount)
-
-                return True, "Thanh toán thành công!"
-            else:
-                return False, "Lỗi khi lưu giao dịch vào Database"
-
-        except Exception as e:
-            return False, f"Lỗi hệ thống: {str(e)}"
+        return self.ticket_dao.create_concession_transaction(user_id, total_amount, products_list, customer_id)
 
     def search_products(self, keyword, category):
         return self.dao.search_products(keyword, category)

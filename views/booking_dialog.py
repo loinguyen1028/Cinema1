@@ -427,11 +427,15 @@ class BookingDialog(tk.Toplevel):
             return
 
         def do_pay():
+
+            cus_id = self.current_customer.customer_id if self.current_customer else None
+
             success, msg = self.controller.process_payment(
                 self.st.showtime_id,
                 self.user_id,
                 list(self.selected_seats),
-                self.final_total_amount
+                self.final_total_amount,
+                customer_id = cus_id
             )
 
             if success:

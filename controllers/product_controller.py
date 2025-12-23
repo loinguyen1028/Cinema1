@@ -1,5 +1,5 @@
 from services.product_service import ProductService
-
+from dao.ticket_dao import TicketDAO
 
 class ProductController:
     def __init__(self):
@@ -19,7 +19,6 @@ class ProductController:
 
     # Hàm xử lý bán hàng trực tiếp (Đồ ăn)
     def process_direct_sale(self, user_id, total_amount, products_list, customer_id=None):
-        from dao.ticket_dao import TicketDAO
         ticket_dao = TicketDAO()
         return ticket_dao.create_concession_transaction(user_id, total_amount, products_list, customer_id)
 
