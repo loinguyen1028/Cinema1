@@ -12,21 +12,33 @@ class ProductDialog(tk.Toplevel):
         self.product_id = product_id
         self.on_success = on_success
 
+        # ===== THEME ĐỒNG BỘ =====
+        self.colors = {
+            "bg": "#0f172a",
+            "panel": "#111827",
+            "card": "#1f2933",
+            "primary": "#facc15",
+            "text": "#e5e7eb",
+            "muted": "#9ca3af",
+            "danger": "#ef4444"
+        }
+
         self.title("Thêm sản phẩm" if mode == "add" else "Cập nhật sản phẩm")
-        self.geometry("500x600")
-        self.config(bg="#f5f6f8")
+        self.geometry("520x620")
+        self.config(bg=self.colors["bg"])
+        self.resizable(False, False)
         self.grab_set()
 
         self.current_image_path = ""
-        self.product_data = self.load_initial_data()  # Load dữ liệu trước khi vẽ UI
+        self.product_data = self.load_initial_data()
 
         self.render_ui()
 
+    # ================= DATA =================
     def load_initial_data(self):
         data = {"name": "", "category": "Đồ ăn", "price": "0"}
 
         if self.mode == "edit" and self.product_id:
-            # --- SỬA LỖI TẠI ĐÂY: Gọi controller lấy chi tiết ---
             p = self.controller.get_detail(self.product_id)
             if p:
                 data["name"] = p.name
@@ -36,66 +48,143 @@ class ProductDialog(tk.Toplevel):
                     self.current_image_path = p.image_path
         return data
 
+    # ================= UI =================
     def render_ui(self):
-        container = tk.Frame(self, bg="#f5f6f8", padx=30, pady=20)
-        container.pack(fill=tk.BOTH, expand=True)
+        container = tk.Frame(
+            self,
+            bg=self.colors["card"],
+            padx=30,
+            pady=25
+        )
+        container.pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
 
-        tk.Label(container, text=self.title(), font=("Arial", 16, "bold"), bg="#f5f6f8", fg="#333").pack(anchor="w",
-                                                                                                         pady=(0, 20))
+        # Title
+        tk.Label(
+            container,
+            text=self.title(),
+            font=("Arial", 16, "bold"),
+            bg=self.colors["card"],
+            fg=self.colors["primary"]
+        ).pack(anchor="w", pady=(0, 20))
 
-        # 1. Tên sản phẩm
-        tk.Label(container, text="Tên sản phẩm", bg="#f5f6f8", fg="#555").pack(anchor="w")
-        self.e_name = tk.Entry(container, font=("Arial", 11))
-        self.e_name.insert(0, self.product_data["name"])  # Đổ dữ liệu vào
-        self.e_name.pack(fill=tk.X, ipady=4, pady=(0, 10))
+        # Helpers
+        def label(text):
+            tk.Label(
+                container,
+                text=text,
+                bg=self.colors["card"],
+                fg=self.colors["muted"],
+                font=("Arial", 10)
+            ).pack(anchor="w")
 
-        # 2. Loại (Combobox)
-        tk.Label(container, text="Loại", bg="#f5f6f8", fg="#555").pack(anchor="w")
-        self.cbo_cat = ttk.Combobox(container, values=["Đồ ăn", "Nước uống", "Combo", "Quà tặng"], font=("Arial", 11),
-                                    state="readonly")
-        self.cbo_cat.set(self.product_data["category"])  # Đổ dữ liệu vào
-        self.cbo_cat.pack(fill=tk.X, ipady=4, pady=(0, 10))
+        def entry():
+            e = tk.Entry(
+                container,
+                font=("Arial", 11),
+                bg=self.colors["panel"],
+                fg=self.colors["text"],
+                insertbackground=self.colors["text"],
+                relief="flat"
+            )
+            e.pack(fill=tk.X, ipady=6, pady=(4, 14))
+            return e
 
-        # 3. Giá
-        tk.Label(container, text="Giá bán (VND)", bg="#f5f6f8", fg="#555").pack(anchor="w")
-        self.e_price = tk.Entry(container, font=("Arial", 11))
-        self.e_price.insert(0, self.product_data["price"])  # Đổ dữ liệu vào
-        self.e_price.pack(fill=tk.X, ipady=4, pady=(0, 10))
+        # ===== TÊN =====
+        label("Tên sản phẩm")
+        self.e_name = entry()
+        self.e_name.insert(0, self.product_data["name"])
 
-        # 4. Ảnh minh họa
-        tk.Label(container, text="Hình ảnh", bg="#f5f6f8", fg="#555").pack(anchor="w")
+        # ===== LOẠI =====
+        label("Loại sản phẩm")
+        self.cbo_cat = ttk.Combobox(
+            container,
+            values=["Đồ ăn", "Nước uống", "Combo", "Quà tặng"],
+            state="readonly",
+            font=("Arial", 11)
+        )
+        self.cbo_cat.set(self.product_data["category"])
+        self.cbo_cat.pack(fill=tk.X, ipady=4, pady=(4, 14))
 
-        img_frame = tk.Frame(container, bg="#f5f6f8")
-        img_frame.pack(fill=tk.X, pady=5)
+        # ===== GIÁ =====
+        label("Giá bán (VND)")
+        self.e_price = entry()
+        self.e_price.insert(0, self.product_data["price"])
 
-        self.lbl_img = tk.Label(img_frame, text="[ IMG ]", bg="#ddd", width=15, height=8)
+        # ===== ẢNH =====
+        label("Hình ảnh sản phẩm")
+
+        img_frame = tk.Frame(container, bg=self.colors["card"])
+        img_frame.pack(fill=tk.X, pady=(6, 20))
+
+        self.lbl_img = tk.Label(
+            img_frame,
+            text="NO IMAGE",
+            bg=self.colors["panel"],
+            fg=self.colors["muted"],
+            width=14,
+            height=7
+        )
         self.lbl_img.pack(side=tk.LEFT)
 
-        tk.Button(img_frame, text="📂 Chọn ảnh", bg="#5c6bc0", fg="white",
-                  command=self.choose_image).pack(side=tk.LEFT, padx=20, anchor="n")
+        tk.Button(
+            img_frame,
+            text="📂 Chọn ảnh",
+            bg=self.colors["primary"],
+            fg="#000",
+            font=("Arial", 10, "bold"),
+            padx=16,
+            pady=8,
+            relief="flat",
+            cursor="hand2",
+            command=self.choose_image
+        ).pack(side=tk.LEFT, padx=20, anchor="n")
 
-        # --- QUAN TRỌNG: Load ảnh cũ lên nếu có ---
         if self.current_image_path:
             self.load_image_to_label(self.current_image_path)
 
-        # Nút Hành động
-        btn_frame = tk.Frame(container, bg="#f5f6f8", pady=20)
-        btn_frame.pack(side=tk.BOTTOM, fill=tk.X)
+        # ===== BUTTON =====
+        btn_frame = tk.Frame(container, bg=self.colors["card"])
+        btn_frame.pack(side=tk.BOTTOM, fill=tk.X, pady=(10, 0))
 
-        tk.Button(btn_frame, text="Hủy", bg="#ff5722", fg="white", font=("Arial", 10, "bold"),
-                  width=10, relief="flat", command=self.destroy).pack(side=tk.RIGHT, padx=10)
+        tk.Button(
+            btn_frame,
+            text="💾 LƯU",
+            bg=self.colors["primary"],
+            fg="#000",
+            font=("Arial", 11, "bold"),
+            padx=20,
+            pady=8,
+            relief="flat",
+            cursor="hand2",
+            command=self.save_action
+        ).pack(side=tk.RIGHT, padx=10)
 
-        tk.Button(btn_frame, text="Lưu", bg="#1976d2", fg="white", font=("Arial", 10, "bold"),
-                  width=10, relief="flat", command=self.save_action).pack(side=tk.RIGHT)
+        tk.Button(
+            btn_frame,
+            text="✖ HỦY",
+            bg=self.colors["danger"],
+            fg="white",
+            font=("Arial", 11, "bold"),
+            padx=20,
+            pady=8,
+            relief="flat",
+            cursor="hand2",
+            command=self.destroy
+        ).pack(side=tk.RIGHT)
 
+    # ================= IMAGE =================
     def choose_image(self):
-        file_path = filedialog.askopenfilename(title="Chọn ảnh", filetypes=[("Image files", "*.jpg *.jpeg *.png")])
+        file_path = filedialog.askopenfilename(
+            title="Chọn ảnh",
+            filetypes=[("Image files", "*.jpg *.jpeg *.png")]
+        )
         if file_path:
             self.current_image_path = file_path
             self.load_image_to_label(file_path)
 
     def load_image_to_label(self, path):
-        if not path or not os.path.exists(path): return
+        if not path or not os.path.exists(path):
+            return
         try:
             img = Image.open(path)
             img = img.resize((100, 100), Image.Resampling.LANCZOS)
@@ -105,17 +194,26 @@ class ProductDialog(tk.Toplevel):
         except Exception as e:
             print(f"Lỗi load ảnh: {e}")
 
+    # ================= SAVE =================
     def save_action(self):
         name = self.e_name.get().strip()
         cat = self.cbo_cat.get()
         price = self.e_price.get().strip()
         img = self.current_image_path
 
-        success, msg = self.controller.save(self.mode, self.product_id, name, cat, price, img)
+        success, msg = self.controller.save(
+            self.mode,
+            self.product_id,
+            name,
+            cat,
+            price,
+            img
+        )
 
         if success:
             messagebox.showinfo("Thành công", "Lưu sản phẩm thành công!")
-            if self.on_success: self.on_success()
+            if self.on_success:
+                self.on_success()
             self.destroy()
         else:
             messagebox.showwarning("Lỗi", msg)

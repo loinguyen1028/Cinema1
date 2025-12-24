@@ -1,6 +1,5 @@
 import tkinter as tk
-from tkinter import ttk
-from tkinter import messagebox
+from tkinter import ttk, messagebox
 from controllers.staff_controller import StaffController
 from views.staff_dialog import StaffDialog
 
@@ -8,135 +7,225 @@ from views.staff_dialog import StaffDialog
 class StaffManager:
     def __init__(self, parent_frame):
         self.parent = parent_frame
-        self.controller = StaffController()  # Khởi tạo Controller
+        self.controller = StaffController()
+
+        self.current_action_row = None
+        self.action_buttons = []
+
         self.render()
 
+    # =====================================================
     def render(self):
-        # --- Container chính ---
-        content = tk.Frame(self.parent, bg="#f0f2f5")
-        content.pack(fill=tk.BOTH, expand=True, padx=30, pady=30)
+        self.colors = {
+            "bg": "#0f172a",
+            "panel": "#111827",
+            "card": "#1f2933",
+            "primary": "#facc15",
+            "text": "#e5e7eb",
+            "muted": "#9ca3af",
+            "danger": "#ef4444",
+            "edit": "#2563eb",
+            "selected": "#1e3a8a"
+        }
 
-        # --- Toolbar ---
-        toolbar = tk.Frame(content, bg="#f0f2f5")
-        toolbar.pack(fill=tk.X, pady=(0, 20))
+        container = tk.Frame(self.parent, bg=self.colors["bg"])
+        container.pack(fill=tk.BOTH, expand=True, padx=30, pady=25)
 
-        # Search Frame
-        search_frame = tk.Frame(toolbar, bg="#f0f2f5")
-        search_frame.pack(side=tk.LEFT)
+        # ===== HEADER =====
+        header = tk.Frame(container, bg=self.colors["bg"])
+        header.pack(fill=tk.X, pady=(0, 18))
 
-        self.entry_search = tk.Entry(search_frame, width=40, font=("Arial", 11))
-        self.entry_search.pack(side=tk.LEFT, ipady=3)
-        self.entry_search.bind("<KeyRelease>", self.on_search)  # Tìm kiếm ngay khi gõ phím
+        tk.Label(
+            header,
+            text="👤 QUẢN LÝ NHÂN VIÊN",
+            font=("Arial", 18, "bold"),
+            bg=self.colors["bg"],
+            fg=self.colors["primary"]
+        ).pack(side=tk.LEFT)
 
-        tk.Label(search_frame, text="🔍", font=("Arial", 12), bg="#f0f2f5").pack(side=tk.LEFT, padx=5)
+        tk.Button(
+            header,
+            text="+ Thêm nhân viên",
+            bg=self.colors["primary"],
+            fg="#000",
+            font=("Arial", 11, "bold"),
+            padx=16,
+            pady=6,
+            relief="flat",
+            cursor="hand2",
+            command=lambda: self.open_dialog("add")
+        ).pack(side=tk.RIGHT)
 
-        # Button Add
-        btn_add = tk.Button(toolbar, text="Thêm nhân viên", bg="#5c6bc0", fg="white",
-                            font=("Arial", 10, "bold"), padx=20, pady=5, relief="flat", cursor="hand2",
-                            command=lambda: self.open_dialog("add"))
-        btn_add.pack(side=tk.RIGHT)
+        # ===== TABLE =====
+        card = tk.Frame(container, bg=self.colors["card"])
+        card.pack(fill=tk.BOTH, expand=True)
 
-        # --- Table Frame ---
-        table_frame = tk.Frame(content, bg="white", bd=1, relief="solid")
-        table_frame.pack(fill=tk.BOTH, expand=True)
+        style = ttk.Style()
+        style.configure(
+            "Treeview",
+            background=self.colors["panel"],
+            fieldbackground=self.colors["panel"],
+            foreground=self.colors["text"],
+            rowheight=38,
+            font=("Arial", 11)
+        )
 
-        # Cấu hình các cột
-        columns = ("id", "name", "gender", "dob", "phone", "email", "role", "start_date", "actions")
-        self.tree = ttk.Treeview(table_frame, columns=columns, show="headings", selectmode="browse")
+        style.configure(
+            "Treeview.Heading",
+            background=self.colors["card"],
+            foreground=self.colors["primary"],
+            font=("Arial", 11, "bold")
+        )
 
-        # Cấu hình Header và Width
-        headers = ["ID", "Họ tên", "Giới tính", "Ngày sinh", "SĐT", "Email", "Chức vụ", "Ngày vào làm", "Thao tác"]
-        widths = [40, 150, 60, 90, 100, 180, 80, 100, 80]
+        style.map(
+            "Treeview",
+            background=[("selected", self.colors["selected"])],
+            foreground=[("selected", "#ffffff")]
+        )
+
+        columns = (
+            "id", "name", "gender", "dob",
+            "phone", "email", "role", "start_date", "actions"
+        )
+
+        self.tree = ttk.Treeview(
+            card,
+            columns=columns,
+            show="headings",
+            selectmode="browse"
+        )
+
+        headers = [
+            "ID", "Họ tên", "Giới tính", "Ngày sinh",
+            "SĐT", "Email", "Chức vụ", "Ngày vào làm", "Thao tác"
+        ]
+
+        widths = [60, 180, 80, 100, 110, 220, 120, 120, 160]
 
         for col, h, w in zip(columns, headers, widths):
-            self.tree.heading(col, text=h, anchor="w" if col != "actions" else "center")
-            self.tree.column(col, width=w, anchor="w" if col != "actions" else "center")
+            anchor = "center" if col in ("id", "gender", "actions") else "w"
+            self.tree.heading(col, text=h, anchor=anchor)
+            self.tree.column(col, width=w, anchor=anchor, stretch=(col != "actions"))
 
-        self.tree.pack(fill=tk.BOTH, expand=True)
+        self.tree.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
 
-        # Bind sự kiện click vào bảng (để xử lý nút Sửa/Xóa)
-        self.tree.bind("<ButtonRelease-1>", self.on_action_click)
+        # EVENTS
+        self.tree.bind("<<TreeviewSelect>>", self.show_action_buttons)
+        self.tree.bind("<Configure>", lambda e: self.hide_action_buttons())
+        self.tree.bind("<MouseWheel>", lambda e: self.hide_action_buttons())
+        self.tree.bind("<Button-1>", lambda e: self.hide_action_buttons())
 
-        # Load dữ liệu lần đầu
+        self.create_action_buttons()
         self.load_data()
 
-
-    # HÀM XỬ LÝ DỮ LIỆU
+    # =====================================================
     def load_data(self):
-        """Lấy tất cả nhân viên từ Controller"""
+        self.hide_action_buttons()
+        self.tree.delete(*self.tree.get_children())
+
         staff_list = self.controller.get_all()
-        self.update_table(staff_list)
-
-    def on_search(self, event):
-        """Tìm kiếm khi gõ phím"""
-        keyword = self.entry_search.get().strip()
-        if keyword:
-            staff_list = self.controller.search(keyword)
-        else:
-            staff_list = self.controller.get_all()
-        self.update_table(staff_list)
-
-    def update_table(self, staff_list):
-        """Xóa bảng cũ và điền dữ liệu mới"""
-        for item in self.tree.get_children():
-            self.tree.delete(item)
-
-        action_icons = "✏  🗑"
 
         for s in staff_list:
-            # Lấy thông tin phụ từ cột JSON extra_info
-            extra = s.extra_info if s.extra_info else {}
+            extra = s.extra_info or {}
 
-            gender = extra.get("gender", "")
-            dob = extra.get("dob", "")
-            phone = extra.get("phone", "")
-            email = extra.get("email", "")
-            start_date = extra.get("start_date", "")
+            self.tree.insert(
+                "",
+                tk.END,
+                iid=s.user_id,
+                values=(
+                    s.user_id,
+                    s.full_name,
+                    extra.get("gender", ""),
+                    extra.get("dob", ""),
+                    extra.get("phone", ""),
+                    extra.get("email", ""),
+                    s.role.role_name if s.role else "N/A",
+                    extra.get("start_date", ""),
+                    ""
+                )
+            )
 
-            # Lấy trực tiếp từ quan hệ bảng Role
-            role_name = s.role.role_name if s.role else "N/A"
+    # =====================================================
+    # ===== ACTION BUTTON SYSTEM =====
+    def create_action_buttons(self):
+        base = {
+            "font": ("Arial", 11),
+            "bd": 0,
+            "relief": "flat",
+            "cursor": "hand2"
+        }
 
-            vals = (s.user_id, s.full_name, gender, dob, phone, email, role_name, start_date, action_icons)
+        self.btn_edit = tk.Button(
+            self.tree,
+            text="✏",
+            bg=self.colors["edit"],
+            fg="white",
+            command=self.on_edit,
+            **base
+        )
 
-            # Insert vào Treeview, dùng user_id làm iid để dễ truy xuất
-            self.tree.insert("", tk.END, iid=s.user_id, values=vals)
+        self.btn_delete = tk.Button(
+            self.tree,
+            text="🗑",
+            bg=self.colors["danger"],
+            fg="white",
+            command=self.on_delete,
+            **base
+        )
 
+        self.action_buttons = [self.btn_edit, self.btn_delete]
 
-    # XỬ LÝ SỰ KIỆN CLICK (SỬA / XÓA)
-    def on_action_click(self, event):
-        region = self.tree.identify("region", event.x, event.y)
-        if region != "cell": return
+    def show_action_buttons(self, event=None):
+        selected = self.tree.selection()
+        if not selected:
+            return
 
-        column = self.tree.identify_column(event.x)
+        self.current_action_row = selected[0]
 
-        # Cột actions là cột thứ 9 (#9)
-        if column == '#9':
-            item_id = self.tree.identify_row(event.y)
-            if not item_id: return
+        bbox = self.tree.bbox(self.current_action_row, "#9")
+        if not bbox:
+            return
 
-            bbox = self.tree.bbox(item_id, column)
-            if bbox:
-                cell_x, _, cell_width, _ = bbox
-                rel_x = event.x - cell_x
+        x, y, width, height = bbox
+        part = width // 2
 
-                # Logic chia đôi ô: [ Sửa ] | [ Xóa ]
-                if rel_x < cell_width / 2:
-                    # --- NÚT SỬA ---
-                    self.open_dialog("edit", item_id)
-                else:
-                    # --- NÚT XÓA ---
-                    # Lấy tên nhân viên từ cột thứ 2 (index 1) để hỏi xác nhận
-                    name = self.tree.item(item_id, "values")[1]
+        for i, btn in enumerate(self.action_buttons):
+            btn.place(
+                x=x + i * part + 4,
+                y=y + 4,
+                width=part - 8,
+                height=height - 8
+            )
 
-                    if messagebox.askyesno("Xác nhận", f"Bạn có chắc chắn muốn xóa nhân viên: {name}?"):
-                        success, msg = self.controller.delete(item_id)
-                        if success:
-                            messagebox.showinfo("Thành công", msg)
-                            self.load_data()  # Refresh lại bảng
-                        else:
-                            messagebox.showerror("Lỗi", msg)
+    def hide_action_buttons(self):
+        for btn in self.action_buttons:
+            btn.place_forget()
 
-    #Mở dialog thêm sửa
+    # =====================================================
+    # ===== ACTION HANDLERS =====
+    def on_edit(self):
+        if self.current_action_row:
+            self.open_dialog("edit", self.current_action_row)
+
+    def on_delete(self):
+        if not self.current_action_row:
+            return
+
+        name = self.tree.item(self.current_action_row, "values")[1]
+        if messagebox.askyesno("Xác nhận", f"Xóa nhân viên: {name}?"):
+            success, msg = self.controller.delete(self.current_action_row)
+            if success:
+                messagebox.showinfo("Thành công", msg)
+                self.load_data()
+            else:
+                messagebox.showerror("Lỗi", msg)
+
+    # =====================================================
     def open_dialog(self, mode, staff_id=None):
-        # Gọi StaffDialog và truyền hàm load_data để tự động refresh sau khi lưu
-        StaffDialog(self.parent, self.controller, mode, staff_id, on_success=self.load_data)
+        StaffDialog(
+            self.parent,
+            self.controller,
+            mode,
+            staff_id,
+            on_success=self.load_data
+        )

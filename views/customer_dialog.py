@@ -12,81 +12,172 @@ class CustomerDialog(tk.Toplevel):
         self.on_success = on_success
 
         self.title("Thêm khách hàng" if mode == "add" else "Cập nhật khách hàng")
-        self.geometry("500x500")
-        self.config(bg="#f5f6f8")
+        self.geometry("520x560")
+        self.config(bg="#121212")
         self.grab_set()
+
+        # Theme
+        self.colors = {
+            "bg": "#121212",
+            "panel": "#1a1a1a",
+            "text": "#ffffff",
+            "muted": "#aaaaaa",
+            "gold": "#f5c518",
+            "btn": "#f5c518",
+            "danger": "#e53935"
+        }
 
         self.render_ui()
 
         if mode == "edit" and customer_id:
             self.load_data()
 
+    # ================= UI =================
     def render_ui(self):
-        container = tk.Frame(self, bg="#f5f6f8", padx=30, pady=20)
+        container = tk.Frame(self, bg=self.colors["panel"], padx=30, pady=25)
         container.pack(fill=tk.BOTH, expand=True)
 
-        tk.Label(container, text=self.title(), font=("Arial", 16, "bold"), bg="#f5f6f8", fg="#333").pack(anchor="w",
-                                                                                                         pady=(0, 20))
+        # ===== Title =====
+        tk.Label(
+            container,
+            text="➕ THÊM KHÁCH HÀNG" if self.mode == "add" else "✏️ CẬP NHẬT KHÁCH HÀNG",
+            font=("Arial", 16, "bold"),
+            fg=self.colors["gold"],
+            bg=self.colors["panel"]
+        ).pack(anchor="w", pady=(0, 20))
 
-        # Tên
+        # ===== Inputs =====
         self.e_name = self.create_input(container, "Họ và tên")
-        # SĐT
         self.e_phone = self.create_input(container, "Số điện thoại")
-        # Email
         self.e_email = self.create_input(container, "Email")
 
-        # Ngày sinh (Có lịch)
-        tk.Label(container, text="Ngày sinh", bg="#f5f6f8", fg="#555").pack(anchor="w")
-        f_dob = tk.Frame(container, bg="#f5f6f8")
-        f_dob.pack(fill=tk.X, pady=(0, 10))
-        self.e_dob = tk.Entry(f_dob, font=("Arial", 11), width=30)
-        self.e_dob.pack(side=tk.LEFT, ipady=4, fill=tk.X, expand=True)
+        # ===== Ngày sinh =====
+        tk.Label(container, text="Ngày sinh", bg=self.colors["panel"], fg=self.colors["muted"]).pack(anchor="w")
+        f_dob = tk.Frame(container, bg=self.colors["panel"])
+        f_dob.pack(fill=tk.X, pady=(0, 12))
+
+        self.e_dob = tk.Entry(
+            f_dob,
+            font=("Arial", 11),
+            bg="#202020",
+            fg="white",
+            insertbackground="white",
+            relief="flat"
+        )
+        self.e_dob.pack(side=tk.LEFT, fill=tk.X, expand=True, ipady=6)
 
         def open_cal(e):
-            DatePickerPopup(self, self.e_dob.get(),
-                            lambda d: (self.e_dob.delete(0, tk.END), self.e_dob.insert(0, d)),
-                            trigger_widget=self.e_dob)
+            DatePickerPopup(
+                self,
+                self.e_dob.get(),
+                lambda d: (self.e_dob.delete(0, tk.END), self.e_dob.insert(0, d)),
+                trigger_widget=self.e_dob
+            )
 
         self.e_dob.bind("<Button-1>", open_cal)
-        tk.Label(f_dob, text="📅", bg="#f5f6f8").pack(side=tk.LEFT, padx=5)
 
-        # --- KHU VỰC ĐIỂM & HẠNG ---
-        row_level = tk.Frame(container, bg="#f5f6f8")
-        row_level.pack(fill=tk.X)
+        tk.Label(
+            f_dob,
+            text="📅",
+            bg=self.colors["panel"],
+            fg=self.colors["gold"],
+            font=("Arial", 12)
+        ).pack(side=tk.LEFT, padx=6)
 
-        # 1. Điểm tích lũy
-        f_points = tk.Frame(row_level, bg="#f5f6f8")
+        # ===== Points & Level =====
+        row = tk.Frame(container, bg=self.colors["panel"])
+        row.pack(fill=tk.X, pady=5)
+
+        # Points
+        f_points = tk.Frame(row, bg=self.colors["panel"])
         f_points.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 10))
-        tk.Label(f_points, text="Điểm tích lũy", bg="#f5f6f8", fg="#555").pack(anchor="w")
-        self.e_points = tk.Entry(f_points, font=("Arial", 11))
-        self.e_points.insert(0, "0")
-        self.e_points.pack(fill=tk.X, ipady=4)
 
-        # 2. Hạng thành viên
-        f_level = tk.Frame(row_level, bg="#f5f6f8")
+        tk.Label(
+            f_points,
+            text="Điểm tích lũy",
+            bg=self.colors["panel"],
+            fg=self.colors["muted"]
+        ).pack(anchor="w")
+
+        self.e_points = tk.Entry(
+            f_points,
+            font=("Arial", 11),
+            bg="#202020",
+            fg="white",
+            insertbackground="white",
+            relief="flat"
+        )
+        self.e_points.insert(0, "0")
+        self.e_points.pack(fill=tk.X, ipady=6)
+
+        # Level
+        f_level = tk.Frame(row, bg=self.colors["panel"])
         f_level.pack(side=tk.LEFT, fill=tk.X, expand=True)
-        tk.Label(f_level, text="Hạng thành viên", bg="#f5f6f8", fg="#555").pack(anchor="w")
-        self.cbo_level = ttk.Combobox(f_level, values=["Thân thiết", "Bạc", "Vàng", "Kim cương"], font=("Arial", 11),
-                                      state="readonly")
+
+        tk.Label(
+            f_level,
+            text="Hạng thành viên",
+            bg=self.colors["panel"],
+            fg=self.colors["muted"]
+        ).pack(anchor="w")
+
+        self.cbo_level = ttk.Combobox(
+            f_level,
+            values=["Thân thiết", "Bạc", "Vàng", "Kim cương"],
+            font=("Arial", 11),
+            state="readonly"
+        )
         self.cbo_level.current(0)
         self.cbo_level.pack(fill=tk.X, ipady=4)
 
-        # --- XỬ LÝ KHÓA NHẬP LIỆU ---
-        # Nếu là thêm mới (add), khóa ô Điểm và Hạng lại
+        # ===== Khóa khi thêm =====
         if self.mode == "add":
-            self.e_points.config(state='readonly')  # Chỉ đọc, không cho sửa
-            self.cbo_level.config(state='disabled')  # Không cho xổ xuống chọn
+            self.e_points.config(state="readonly")
+            self.cbo_level.config(state="disabled")
 
-        # Nút Lưu
-        tk.Button(container, text="Lưu", bg="#1976d2", fg="white", font=("Arial", 11, "bold"),
-                  width=15, command=self.save_action).pack(pady=30)
+        # ===== Buttons =====
+        btns = tk.Frame(container, bg=self.colors["panel"])
+        btns.pack(fill=tk.X, pady=30)
 
+        tk.Button(
+            btns,
+            text="Hủy",
+            width=10,
+            command=self.destroy
+        ).pack(side=tk.LEFT)
+
+        tk.Button(
+            btns,
+            text="💾 LƯU",
+            bg=self.colors["btn"],
+            fg="black",
+            font=("Arial", 11, "bold"),
+            width=15,
+            relief="flat",
+            command=self.save_action
+        ).pack(side=tk.RIGHT)
+
+    # ================= Helpers =================
     def create_input(self, parent, label):
-        tk.Label(parent, text=label, bg="#f5f6f8", fg="#555").pack(anchor="w")
-        e = tk.Entry(parent, font=("Arial", 11))
-        e.pack(fill=tk.X, ipady=4, pady=(0, 10))
+        tk.Label(
+            parent,
+            text=label,
+            bg=self.colors["panel"],
+            fg=self.colors["muted"]
+        ).pack(anchor="w")
+
+        e = tk.Entry(
+            parent,
+            font=("Arial", 11),
+            bg="#202020",
+            fg="white",
+            insertbackground="white",
+            relief="flat"
+        )
+        e.pack(fill=tk.X, ipady=6, pady=(0, 12))
         return e
 
+    # ================= DATA =================
     def load_data(self):
         cus = self.controller.get_detail(self.customer_id)
         if cus:
@@ -97,21 +188,17 @@ class CustomerDialog(tk.Toplevel):
             extra = cus.extra_info if cus.extra_info else {}
             self.e_dob.insert(0, extra.get("dob", ""))
 
-            self.e_points.config(state='normal')
+            self.e_points.config(state="normal")
             self.e_points.delete(0, tk.END)
-
-            # --- SỬA ĐOẠN NÀY ---
-            # Lấy từ cột points
             self.e_points.insert(0, str(cus.points))
-            self.e_points.config(state='readonly')
+            self.e_points.config(state="readonly")
 
-            # Hạng thành viên
-            self.cbo_level.config(state='normal')
-            # Lấy tên hạng từ relationship
+            self.cbo_level.config(state="normal")
             tier_name = cus.tier.tier_name if cus.tier else "Thân thiết"
             self.cbo_level.set(tier_name)
-            self.cbo_level.config(state='disabled')
+            self.cbo_level.config(state="disabled")
 
+    # ================= SAVE =================
     def save_action(self):
         name = self.e_name.get().strip()
         phone = self.e_phone.get().strip()
@@ -124,11 +211,21 @@ class CustomerDialog(tk.Toplevel):
             messagebox.showwarning("Thiếu thông tin", "Vui lòng nhập tên khách hàng")
             return
 
-        success, msg = self.controller.save(self.mode, self.customer_id, name, phone, email, dob, points, level)
+        success, msg = self.controller.save(
+            self.mode,
+            self.customer_id,
+            name,
+            phone,
+            email,
+            dob,
+            points,
+            level
+        )
 
         if success:
             messagebox.showinfo("Thành công", msg)
-            if self.on_success: self.on_success()
+            if self.on_success:
+                self.on_success()
             self.destroy()
         else:
             messagebox.showwarning("Lỗi", msg)

@@ -1,92 +1,232 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
-from controllers.room_controller import RoomController  # Controller xử lý logic
-from views.room_dialog import RoomDialog  # Dialog để thêm/sửa phòng
+from controllers.room_controller import RoomController
+from views.room_dialog import RoomDialog
+
 
 class RoomManager:
     def __init__(self, parent_frame):
         self.parent = parent_frame
-        self.controller = RoomController()  # Controller quản lý rạp chiếu
+        self.controller = RoomController()
+
+        # ===== STATE =====
+        self.action_buttons = []
+        self.current_action_row = None
 
         self.render()
 
+    # =====================================================
     def render(self):
-        container = tk.Frame(self.parent, bg="#f0f2f5")
-        container.pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
+        self.colors = {
+            "bg": "#0f172a",
+            "panel": "#111827",
+            "card": "#1f2933",
+            "primary": "#facc15",
+            "text": "#e5e7eb",
+            "muted": "#9ca3af",
+            "danger": "#ef4444",
+            "edit": "#2563eb"
+        }
 
-        # --- Bảng dữ liệu (Danh sách phòng chiếu) ---
-        table_frame = tk.Frame(container, bg="white", bd=1, relief="solid")
-        table_frame.pack(fill=tk.BOTH, expand=True)
+        for w in self.parent.winfo_children():
+            w.destroy()
+
+        container = tk.Frame(self.parent, bg=self.colors["bg"])
+        container.pack(fill=tk.BOTH, expand=True, padx=30, pady=25)
+
+        # ===== HEADER =====
+        header = tk.Frame(container, bg=self.colors["bg"])
+        header.pack(fill=tk.X, pady=(0, 18))
+
+        tk.Label(
+            header,
+            text="🏢 QUẢN LÝ PHÒNG CHIẾU",
+            font=("Arial", 18, "bold"),
+            bg=self.colors["bg"],
+            fg=self.colors["primary"]
+        ).pack(side=tk.LEFT)
+
+        tk.Button(
+            header,
+            text="+ Thêm phòng",
+            bg=self.colors["primary"],
+            fg="#000",
+            font=("Arial", 11, "bold"),
+            padx=16,
+            pady=6,
+            relief="flat",
+            cursor="hand2",
+            command=self.open_add_dialog
+        ).pack(side=tk.RIGHT)
+
+        # ===== CARD =====
+        card = tk.Frame(container, bg=self.colors["card"])
+        card.pack(fill=tk.BOTH, expand=True)
+
+        # ===== TREEVIEW STYLE =====
+        style = ttk.Style()
+        style.theme_use("default")
+
+        style.configure(
+            "Treeview",
+            background=self.colors["panel"],
+            fieldbackground=self.colors["panel"],
+            foreground=self.colors["text"],
+            rowheight=40,
+            font=("Arial", 11),
+            borderwidth=0
+        )
+
+        style.configure(
+            "Treeview.Heading",
+            background=self.colors["card"],
+            foreground=self.colors["primary"],
+            font=("Arial", 11, "bold"),
+            relief="flat"
+        )
+
+        style.map(
+            "Treeview",
+            background=[("selected", "#1e3a8a")],
+            foreground=[("selected", "#ffffff")]
+        )
 
         columns = ("room_id", "room_name", "capacity", "actions")
-        self.tree = ttk.Treeview(table_frame, columns=columns, show="headings", selectmode="browse")
+        self.tree = ttk.Treeview(
+            card,
+            columns=columns,
+            show="headings",
+            selectmode="browse"
+        )
 
         headers = ["ID", "Tên phòng", "Sức chứa", "Thao tác"]
-        widths = [40, 200, 100, 150]
+        widths = [70, 260, 120, 150]
 
-        for col, header, w in zip(columns, headers, widths):
-            self.tree.heading(col, text=header, anchor="w")
-            self.tree.column(col, width=w, anchor="w" if col != "actions" else "center")
+        for col, h, w in zip(columns, headers, widths):
+            anchor = "center" if col in ("room_id", "capacity", "actions") else "w"
+            self.tree.heading(col, text=h, anchor=anchor)
+            self.tree.column(col, width=w, anchor=anchor, stretch=(col != "actions"))
 
-        self.tree.heading("actions", anchor="center")
-        self.tree.pack(fill=tk.BOTH, expand=True)
+        self.tree.column("actions", stretch=False, anchor="center")
+        self.tree.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
 
-        # Nút Thêm phòng
-        add_button = tk.Button(container, text="Thêm Phòng Chiếu", bg="#5c6bc0", fg="white", font=("Arial", 10, "bold"),
-                               command=self.open_add_dialog)
-        add_button.pack(side=tk.BOTTOM, pady=15)
+        # ===== EVENTS =====
+        self.tree.bind("<<TreeviewSelect>>", self.show_action_buttons)
+        self.tree.bind("<Configure>", lambda e: self.hide_action_buttons())
+        self.tree.bind("<MouseWheel>", lambda e: self.hide_action_buttons())
+        self.tree.bind("<Button-1>", lambda e: self.hide_action_buttons())
 
-        # Tải danh sách phòng chiếu
+        self.create_action_buttons()
         self.load_rooms()
 
+    # =====================================================
     def load_rooms(self):
-        # Lấy danh sách phòng chiếu từ controller
+        self.hide_action_buttons()
+        self.tree.delete(*self.tree.get_children())
+
         rooms = self.controller.get_all_rooms()
-        self.update_table(rooms)
 
-    def update_table(self, rooms):
-        # Xóa tất cả dữ liệu trong bảng
-        for item in self.tree.get_children():
-            self.tree.delete(item)
-
-        action_btns = "✏       🗑"  # Sửa và Xóa
         for room in rooms:
-            vals = (room.room_id, room.room_name, room.capacity, action_btns)
-            self.tree.insert("", tk.END, iid=room.room_id, values=vals)
+            self.tree.insert(
+                "",
+                tk.END,
+                iid=room.room_id,
+                values=(
+                    room.room_id,
+                    room.room_name,
+                    room.capacity,
+                    ""  # cell trống
+                )
+            )
 
-        # Gắn sự kiện cho cột "Thao tác"
-        self.tree.bind("<ButtonRelease-1>", self.on_action_click)
+    # =====================================================
+    # ===== ACTION BUTTON SYSTEM =====
+    def create_action_buttons(self):
+        base = {
+            "font": ("Arial", 11),
+            "bd": 0,
+            "relief": "flat",
+            "cursor": "hand2"
+        }
 
-    def open_add_dialog(self):
-        # Mở hộp thoại thêm phòng chiếu
-        RoomDialog(self.parent, self.controller, mode="add", on_success=self.load_rooms)
+        self.btn_edit = tk.Button(
+            self.tree,
+            text="✏",
+            bg=self.colors["edit"],
+            fg="white",
+            command=self.on_edit,
+            **base
+        )
 
-    def open_edit_dialog(self, room_id):
-        # Mở hộp thoại sửa phòng chiếu
-        RoomDialog(self.parent, self.controller, mode="edit", room_id=room_id, on_success=self.load_rooms)
+        self.btn_delete = tk.Button(
+            self.tree,
+            text="🗑",
+            bg=self.colors["danger"],
+            fg="white",
+            command=self.on_delete,
+            **base
+        )
 
-    def on_action_click(self, event):
-        region = self.tree.identify("region", event.x, event.y)
-        if region != "cell":
+        self.action_buttons = [self.btn_edit, self.btn_delete]
+
+    def show_action_buttons(self, event=None):
+        selected = self.tree.selection()
+        if not selected:
             return
 
-        column = self.tree.identify_column(event.x)
-        if column == '#4':  # Cột "Thao tác"
-            item_id = self.tree.identify_row(event.y)
-            bbox = self.tree.bbox(item_id, column)
-            if bbox:
-                # Chia cột "Thao tác" thành 2 phần: Sửa và Xóa
-                cell_x, _, cell_width, _ = bbox
-                rel_x = event.x - cell_x
-                w = cell_width / 2
+        item_id = selected[0]
+        self.current_action_row = item_id
 
-                if rel_x < w:  # Sửa phòng
-                    self.open_edit_dialog(item_id)
-                else:  # Xóa phòng
-                    if messagebox.askyesno("Xác nhận", "Bạn có chắc chắn muốn xóa phòng này?"):
-                        success, msg = self.controller.delete_room(item_id)
-                        if success:
-                            messagebox.showinfo("Thành công", msg)
-                            self.load_rooms()
-                        else:
-                            messagebox.showerror("Lỗi", msg)
+        bbox = self.tree.bbox(item_id, "#4")
+        if not bbox:
+            return
+
+        x, y, width, height = bbox
+        part = width // 2
+
+        for i, btn in enumerate(self.action_buttons):
+            btn.place(
+                x=x + i * part + 4,
+                y=y + 5,
+                width=part - 8,
+                height=height - 10
+            )
+
+    def hide_action_buttons(self):
+        for btn in self.action_buttons:
+            btn.place_forget()
+
+    # =====================================================
+    # ===== ACTIONS =====
+    def open_add_dialog(self):
+        RoomDialog(
+            self.parent,
+            self.controller,
+            mode="add",
+            on_success=self.load_rooms
+        )
+
+    def on_edit(self):
+        if self.current_action_row:
+            RoomDialog(
+                self.parent,
+                self.controller,
+                mode="edit",
+                room_id=self.current_action_row,
+                on_success=self.load_rooms
+            )
+
+    def on_delete(self):
+        if not self.current_action_row:
+            return
+
+        if messagebox.askyesno(
+            "Xác nhận",
+            "Bạn có chắc chắn muốn xóa phòng chiếu này?"
+        ):
+            success, msg = self.controller.delete_room(self.current_action_row)
+            if success:
+                messagebox.showinfo("Thành công", msg)
+                self.load_rooms()
+            else:
+                messagebox.showerror("Lỗi", msg)

@@ -10,10 +10,21 @@ class RoomDialog(tk.Toplevel):
         self.room_id = room_id
         self.on_success = on_success
 
+        # ===== STAFF THEME =====
+        self.colors = {
+            "bg": "#0f172a",
+            "panel": "#111827",
+            "card": "#1f2933",
+            "primary": "#facc15",
+            "text": "#e5e7eb",
+            "muted": "#9ca3af",
+            "danger": "#ef4444"
+        }
+
         self.title("Thêm phòng chiếu" if mode == "add" else "Cập nhật phòng chiếu")
-        self.geometry("420x330")
-        self.config(bg="#f5f6f8")
-        self.resizable(False, False)
+        self.geometry("440x460")
+        self.config(bg=self.colors["bg"])
+        self.resizable(True, True)
         self.grab_set()
 
         self.render_ui()
@@ -22,59 +33,90 @@ class RoomDialog(tk.Toplevel):
             self.load_data()
 
     def render_ui(self):
-        container = tk.Frame(self, bg="#f5f6f8", padx=30, pady=20)
-        container.pack(fill=tk.BOTH, expand=True)
+        # ===== CARD =====
+        container = tk.Frame(
+            self,
+            bg=self.colors["card"],
+            padx=30,
+            pady=25
+        )
+        container.pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
 
+        # ===== TITLE =====
         tk.Label(
             container,
             text=self.title(),
-            font=("Arial", 14, "bold"),
-            bg="#f5f6f8",
-            fg="#333"
+            font=("Arial", 16, "bold"),
+            bg=self.colors["card"],
+            fg=self.colors["primary"]
         ).pack(anchor="w", pady=(0, 20))
 
+        # ===== INPUT STYLE =====
+        def label(text):
+            tk.Label(
+                container,
+                text=text,
+                bg=self.colors["card"],
+                fg=self.colors["muted"],
+                font=("Arial", 10)
+            ).pack(anchor="w")
+
+        def entry():
+            e = tk.Entry(
+                container,
+                font=("Arial", 11),
+                bg=self.colors["panel"],
+                fg=self.colors["text"],
+                insertbackground=self.colors["text"],
+                relief="flat"
+            )
+            e.pack(fill=tk.X, ipady=6, pady=(4, 14))
+            return e
+
         # ===== TÊN PHÒNG =====
-        tk.Label(container, text="Tên phòng chiếu", bg="#f5f6f8", fg="#555").pack(anchor="w")
-        self.e_name = tk.Entry(container, font=("Arial", 11))
-        self.e_name.pack(fill=tk.X, ipady=4, pady=(0, 12))
+        label("Tên phòng chiếu")
+        self.e_name = entry()
 
         # ===== SỐ HÀNG =====
-        tk.Label(container, text="Số hàng ghế (A-Z)", bg="#f5f6f8", fg="#555").pack(anchor="w")
-        self.e_rows = tk.Entry(container, font=("Arial", 11))
-        self.e_rows.pack(fill=tk.X, ipady=4, pady=(0, 12))
+        label("Số hàng ghế (A-Z)")
+        self.e_rows = entry()
 
-        # ===== SỐ GHẾ MỖI HÀNG =====
-        tk.Label(container, text="Số ghế mỗi hàng", bg="#f5f6f8", fg="#555").pack(anchor="w")
-        self.e_seats_per_row = tk.Entry(container, font=("Arial", 11))
-        self.e_seats_per_row.pack(fill=tk.X, ipady=4, pady=(0, 20))
+        # ===== SỐ GHẾ / HÀNG =====
+        label("Số ghế mỗi hàng")
+        self.e_seats_per_row = entry()
 
-        # ===== NÚT LƯU =====
+        # ===== BUTTON =====
         tk.Button(
             container,
-            text="Lưu",
-            bg="#1976d2",
-            fg="white",
-            font=("Arial", 10, "bold"),
-            width=15,
+            text="💾 LƯU",
+            bg=self.colors["primary"],
+            fg="#000000",
+            font=("Arial", 11, "bold"),
+            padx=20,
+            pady=8,
+            relief="flat",
+            cursor="hand2",
             command=self.save_action
-        ).pack()
+        ).pack(pady=(10, 0))
 
-        # Nếu là EDIT → không cho sửa cấu trúc ghế
-        if self.mode == "edit":
-            self.e_rows.config(state="disabled")
-            self.e_seats_per_row.config(state="disabled")
+        # # Nếu EDIT → khóa cấu trúc ghế
+        # if self.mode == "edit":
+        #     self.e_rows.config(state="disabled")
+        #     self.e_seats_per_row.config(state="disabled")
 
+    # ================= DATA =================
     def load_data(self):
         room = self.controller.get_room_by_id(self.room_id)
         if room:
             self.e_name.insert(0, room.room_name)
 
-            # Tính ngược rows & seats_per_row để hiển thị (tham khảo)
-            # Không dùng để update
-            # Giả sử layout cũ: 10 hàng
-            self.e_rows.insert(0, "10")
-            self.e_seats_per_row.insert(0, str(room.capacity // 10))
+            rows = len({s.seat_row for s in room.seats})
+            seats_per_row = max(s.seat_number for s in room.seats)
 
+            self.e_rows.insert(0, rows)
+            self.e_seats_per_row.insert(0, seats_per_row)
+
+    # ================= SAVE =================
     def save_action(self):
         name = self.e_name.get().strip()
         rows = self.e_rows.get().strip()

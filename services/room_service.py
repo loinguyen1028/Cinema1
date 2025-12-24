@@ -41,7 +41,13 @@ class RoomService:
 
         # ===== EDIT =====
         elif mode == "edit":
-            return self.dao.update_room_name(room_id, room_name)
+            return self.dao.update_room_with_seats(
+                room_id=room_id,
+                room_name=room_name,
+                rows=rows,
+                seats_per_row=seats_per_row,
+                capacity=capacity
+            )
 
         return False, "Mode không hợp lệ"
 

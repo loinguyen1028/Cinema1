@@ -55,6 +55,8 @@ class BookingDialog(tk.Toplevel):
     # ==================================================
     # UI
     # ==================================================
+
+
     def render_ui(self):
         # ---------------- LEFT PANEL ----------------
         left = tk.Frame(self, bg=self.colors["panel"], width=360)
@@ -203,7 +205,7 @@ class BookingDialog(tk.Toplevel):
             command=self.on_payment
         ).pack(side=tk.RIGHT)
 
-        # ---------------- RIGHT PANEL (SEATS) ----------------
+        # ---------------- RIGHT PANEL ----------------
         right = tk.Frame(self, bg=self.colors["bg"])
         right.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
@@ -213,13 +215,47 @@ class BookingDialog(tk.Toplevel):
             bg=self.colors["bg"],
             fg=self.colors["gold"],
             font=("Arial", 18, "bold")
-        ).pack(pady=15)
+        ).pack(pady=(15, 5))
 
-        self.canvas = tk.Canvas(right, bg=self.colors["bg"], highlightthickness=0)
+        # ===== LEGEND (QUY ƯỚC MÀU GHẾ) =====
+        self.render_seat_legend(right)
+
+        self.canvas = tk.Canvas(
+            right,
+            bg=self.colors["bg"],
+            highlightthickness=0
+        )
         self.canvas.pack(fill=tk.BOTH, expand=True, padx=20, pady=10)
 
         self.load_seat_map()
+    def render_seat_legend(self, parent):
+        legend = tk.Frame(parent, bg=self.colors["bg"])
+        legend.pack(pady=(0, 10))
 
+        def item(color, text):
+            f = tk.Frame(legend, bg=self.colors["bg"])
+            f.pack(side=tk.LEFT, padx=15)
+
+            box = tk.Canvas(f, width=22, height=18,
+                            bg=self.colors["bg"],
+                            highlightthickness=0)
+            box.pack(side=tk.LEFT)
+            box.create_rectangle(
+                2, 2, 20, 16,
+                fill=color,
+                outline=self.colors["seat_outline"]
+            )
+
+            tk.Label(
+                f, text=text,
+                bg=self.colors["bg"],
+                fg=self.colors["text"],
+                font=("Arial", 10)
+            ).pack(side=tk.LEFT, padx=5)
+
+        item(self.colors["seat_free"], "Ghế trống")
+        item(self.colors["seat_select"], "Ghế đang chọn")
+        item(self.colors["seat_booked"], "Ghế đã bán")
     # ==================================================
     # SEAT MAP
     # ==================================================

@@ -1,114 +1,231 @@
 import tkinter as tk
-from tkinter import ttk
-from tkinter import messagebox
+from tkinter import ttk, messagebox
 from controllers.movie_controller import MovieController
 from views.movie_dialog import MovieDialog
 from views.movie_detail import MovieDetail
+
 
 class MovieManager:
     def __init__(self, parent_frame):
         self.parent = parent_frame
         self.controller = MovieController()
+
+        self.colors = {
+            "bg": "#0f172a",
+            "panel": "#111827",
+            "card": "#1f2933",
+            "primary": "#facc15",
+            "text": "#e5e7eb",
+            "muted": "#9ca3af",
+            "btn": "#2563eb",
+            "selected": "#334155"
+        }
+
+        # ===== ACTION BUTTON STATE =====
+        self.action_buttons = []
+        self.current_action_row = None
+
         self.render()
 
+    # =====================================================
     def render(self):
-        # --- Container & Toolbar (Giữ nguyên) ---
-        content = tk.Frame(self.parent, bg="#f0f2f5")
-        content.pack(fill=tk.BOTH, expand=True, padx=30, pady=30)
+        for w in self.parent.winfo_children():
+            w.destroy()
 
-        toolbar = tk.Frame(content, bg="#f0f2f5")
-        toolbar.pack(fill=tk.X, pady=(0, 20))
+        container = tk.Frame(self.parent, bg=self.colors["bg"])
+        container.pack(fill=tk.BOTH, expand=True, padx=30, pady=25)
 
-        search_frame = tk.Frame(toolbar, bg="#f0f2f5")
-        search_frame.pack(side=tk.LEFT)
-        tk.Label(search_frame, text="Tìm kiếm", bg="#f0f2f5", fg="#666").pack(anchor="w")
+        # ===== HEADER =====
+        header = tk.Frame(container, bg=self.colors["bg"])
+        header.pack(fill=tk.X, pady=(0, 18))
 
-        self.entry_search = tk.Entry(search_frame, width=40, font=("Arial", 11))
-        self.entry_search.pack(side=tk.LEFT, ipady=3)
-        self.entry_search.bind("<KeyRelease>", self.on_search_key_release)
+        tk.Label(
+            header,
+            text="🎬 QUẢN LÝ PHIM",
+            font=("Arial", 18, "bold"),
+            bg=self.colors["bg"],
+            fg=self.colors["primary"]
+        ).pack(side=tk.LEFT)
 
-        tk.Label(search_frame, text="🔍", font=("Arial", 12), bg="#f0f2f5").pack(side=tk.LEFT, padx=5)
+        tk.Button(
+            header,
+            text="+ Thêm phim",
+            bg=self.colors["primary"],
+            fg="#000",
+            font=("Arial", 11, "bold"),
+            padx=16,
+            pady=6,
+            relief="flat",
+            cursor="hand2",
+            command=lambda: self.open_dialog("add")
+        ).pack(side=tk.RIGHT)
 
-        # Nút Thêm (Gọi open_dialog)
-        btn_add = tk.Button(toolbar, text="Thêm", bg="#5c6bc0", fg="white",
-                            font=("Arial", 10, "bold"), padx=20, pady=5, relief="flat", cursor="hand2",
-                            command=lambda: self.open_dialog(mode="add"))
-        btn_add.pack(side=tk.RIGHT)
+        # ===== CARD =====
+        card = tk.Frame(container, bg=self.colors["card"])
+        card.pack(fill=tk.BOTH, expand=True)
 
-        # --- Table ---
-        table_frame = tk.Frame(content, bg="white", bd=1, relief="solid")
-        table_frame.pack(fill=tk.BOTH, expand=True)
-
+        # ===== TREEVIEW STYLE =====
         style = ttk.Style()
-        style.theme_use("clam")
-        style.configure("Treeview", rowheight=45, font=("Arial", 11))
-        style.configure("Treeview.Heading", font=("Arial", 11, "bold"))
+        style.theme_use("default")
 
-        columns = ("id", "name", "genre", "actors", "age_limit", "duration", "actions")
-        self.tree = ttk.Treeview(table_frame, columns=columns, show="headings", selectmode="browse")
+        style.configure(
+            "Treeview",
+            background=self.colors["panel"],
+            fieldbackground=self.colors["panel"],
+            foreground=self.colors["text"],
+            rowheight=44,
+            font=("Arial", 11),
+            borderwidth=0
+        )
+
+        style.configure(
+            "Treeview.Heading",
+            background=self.colors["card"],
+            foreground=self.colors["primary"],
+            font=("Arial", 11, "bold"),
+            relief="flat"
+        )
+
+        style.map(
+            "Treeview",
+            background=[("selected", self.colors["selected"])],
+            foreground=[("selected", "#ffffff")]
+        )
+
+        # ===== TABLE =====
+        columns = ("id", "name", "genre", "actors", "age", "duration", "actions")
+        self.tree = ttk.Treeview(
+            card,
+            columns=columns,
+            show="headings",
+            selectmode="browse"
+        )
 
         headers = ["ID", "Tên phim", "Thể loại", "Diễn viên", "Tuổi", "Thời lượng", "Thao tác"]
-        for col, h in zip(columns, headers):
-            self.tree.heading(col, text=h, anchor="center" if col != "name" and col != "actors" else "w")
+        widths = [60, 220, 150, 220, 70, 110, 160]
 
-        self.tree.column("id", width=40, anchor="center")
-        self.tree.column("name", width=200, anchor="w")
-        self.tree.column("genre", width=120, anchor="w")
-        self.tree.column("actors", width=150, anchor="w")
-        self.tree.column("age_limit", width=60, anchor="center")
-        self.tree.column("duration", width=80, anchor="center")
-        self.tree.column("actions", width=120, anchor="center")
+        for col, h, w in zip(columns, headers, widths):
+            anchor = "center" if col not in ("name", "genre", "actors") else "w"
+            self.tree.heading(col, text=h, anchor=anchor)
+            self.tree.column(col, width=w, anchor=anchor, stretch=(col != "actions"))
 
-        self.tree.pack(fill=tk.BOTH, expand=True)
-        self.tree.bind("<ButtonRelease-1>", self.on_action_click)
+        self.tree.column("actions", anchor="center", stretch=False)
 
+        self.tree.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+
+        # ===== EVENTS =====
+        self.tree.bind("<<TreeviewSelect>>", self.show_action_buttons)
+        self.tree.bind("<Configure>", lambda e: self.hide_action_buttons())
+        self.tree.bind("<MouseWheel>", lambda e: self.hide_action_buttons())
+        self.tree.bind("<Button-1>", lambda e: self.hide_action_buttons())
+
+        self.create_action_buttons()
         self.load_data()
 
-    # --- Logic ---
+    # =====================================================
     def load_data(self):
+        self.hide_action_buttons()
+        self.tree.delete(*self.tree.get_children())
+
         movies = self.controller.get_all()
-        self.update_table(movies)
 
-    def on_search_key_release(self, event):
-        keyword = self.entry_search.get().strip()
-        movies = self.controller.search(keyword)
-        self.update_table(movies)
-
-    def update_table(self, movies):
-        for item in self.tree.get_children():
-            self.tree.delete(item)
-        action_btns = "👁       ✏       🗑"
         for m in movies:
-            extra = m.extra_info if m.extra_info else {}
-            vals = (m.movie_id, m.title, extra.get('genre', ''), extra.get('actors', ''),
-                    extra.get('age_limit', ''), m.duration_min, action_btns)
-            self.tree.insert("", tk.END, iid=m.movie_id, values=vals)
+            extra = m.extra_info or {}
+            self.tree.insert(
+                "",
+                tk.END,
+                iid=m.movie_id,
+                values=(
+                    m.movie_id,
+                    m.title,
+                    extra.get("genre", ""),
+                    extra.get("actors", ""),
+                    extra.get("age_limit", ""),
+                    f"{m.duration_min} phút",
+                    ""  # cell trống – button sẽ đè lên
+                )
+            )
 
-    def on_action_click(self, event):
-        region = self.tree.identify("region", event.x, event.y)
-        if region != "cell": return
-        column = self.tree.identify_column(event.x)
-        if column == '#7':
-            item_id = self.tree.identify_row(event.y)
-            if not item_id: return
-            bbox = self.tree.bbox(item_id, column)
-            if bbox:
-                cell_x, _, cell_width, _ = bbox
-                rel_x = event.x - cell_x
-                if rel_x < cell_width / 3:
-                    MovieDetail(self.parent, self.controller, item_id)
-                elif rel_x < (cell_width / 3) * 2:
-                    self.open_dialog(mode="edit", movie_id=item_id)
-                else:
-                    if messagebox.askyesno("Xác nhận", "Xóa phim này?"):
-                        success, msg = self.controller.delete(item_id)
-                        if success:
-                            messagebox.showinfo("Thành công", msg)
-                            self.load_data()
-                        else:
-                            messagebox.showerror("Lỗi", msg)
+    # =====================================================
+    # ===== ACTION BUTTON SYSTEM =====
+    def create_action_buttons(self):
+        base = {
+            "font": ("Arial", 11),
+            "bd": 0,
+            "relief": "flat",
+            "cursor": "hand2"
+        }
 
-    # --- MỞ DIALOG TỪ FILE RIÊNG ---
+        self.btn_view = tk.Button(
+            self.tree, text="👁", bg="#1e293b", fg="white",
+            command=self.on_view, **base
+        )
+        self.btn_edit = tk.Button(
+            self.tree, text="✏", bg="#2563eb", fg="white",
+            command=self.on_edit, **base
+        )
+        self.btn_delete = tk.Button(
+            self.tree, text="🗑", bg="#dc2626", fg="white",
+            command=self.on_delete, **base
+        )
+
+        self.action_buttons = [self.btn_view, self.btn_edit, self.btn_delete]
+
+    def show_action_buttons(self, event=None):
+        selected = self.tree.selection()
+        if not selected:
+            return
+
+        item_id = selected[0]
+        self.current_action_row = item_id
+
+        bbox = self.tree.bbox(item_id, "#7")
+        if not bbox:
+            return
+
+        x, y, width, height = bbox
+        part = width // 3
+
+        for i, btn in enumerate(self.action_buttons):
+            btn.place(
+                x=x + i * part + 2,
+                y=y + 4,
+                width=part - 4,
+                height=height - 8
+            )
+
+    def hide_action_buttons(self):
+        for btn in self.action_buttons:
+            btn.place_forget()
+
+    # =====================================================
+    # ===== BUTTON ACTIONS =====
+    def on_view(self):
+        if self.current_action_row:
+            MovieDetail(self.parent, self.controller, self.current_action_row)
+
+    def on_edit(self):
+        if self.current_action_row:
+            self.open_dialog("edit", self.current_action_row)
+
+    def on_delete(self):
+        if not self.current_action_row:
+            return
+
+        if messagebox.askyesno("Xác nhận", "Bạn có chắc muốn xóa phim này?"):
+            success, msg = self.controller.delete(self.current_action_row)
+            if success:
+                messagebox.showinfo("Thành công", msg)
+                self.load_data()
+            else:
+                messagebox.showerror("Lỗi", msg)
+
+    # =====================================================
     def open_dialog(self, mode="add", movie_id=None):
-        # Gọi class MovieDialog và truyền hàm load_data vào để nó tự refresh khi lưu xong
-        MovieDialog(self.parent, self.controller, mode, movie_id, on_success=self.load_data)
+        MovieDialog(
+            self.parent,
+            self.controller,
+            mode,
+            movie_id,
+            on_success=self.load_data
+        )
