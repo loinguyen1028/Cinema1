@@ -187,6 +187,22 @@ class TicketBooking:
     # LOGIC
     # =====================================================
     def on_date_selected(self, new_date):
+        # --- CODE MỚI: KIỂM TRA NGÀY QUÁ KHỨ ---
+        try:
+            # 1. Chuyển chuỗi ngày chọn (dd/mm/yyyy) thành đối tượng datetime
+            selected_dt = datetime.strptime(new_date, "%d/%m/%Y")
+
+            # 2. Lấy ngày hiện tại (chỉ lấy ngày, bỏ giờ phút giây)
+            today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+
+            # 3. So sánh
+            if selected_dt < today:
+                messagebox.showwarning("Cảnh báo", "Không thể chọn ngày trong quá khứ để bán vé!")
+                return  # Dừng lại, không thực hiện tiếp
+        except ValueError:
+            pass  # Bỏ qua nếu lỗi định dạng ngày
+        # ---------------------------------------
+
         self.current_date = new_date
         self.lbl_date.config(text=new_date)
         self.load_data()
