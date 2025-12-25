@@ -12,7 +12,7 @@ class TierService:
         return self.dao.get_by_id(tier_id)
 
     def save_tier(self, mode, tier_id, name, min_point, discount):
-        # --- 1. VALIDATION LOGIC (Kiểm tra dữ liệu) ---
+
         if not name or not name.strip():
             return False, "Tên hạng không được để trống"
 
@@ -30,12 +30,12 @@ class TierService:
         except ValueError:
             return False, "Giảm giá phải là số thực"
 
-        # --- 2. GỌI DAO ĐỂ LƯU ---
+
         if mode == "add":
             return self.dao.add(name.strip(), point_val, discount_val)
         else:
             return self.dao.update(tier_id, name.strip(), point_val, discount_val)
 
     def delete_tier(self, tier_id):
-        # Có thể thêm logic kiểm tra trước khi xóa ở đây nếu cần
+
         return self.dao.delete(tier_id)

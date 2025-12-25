@@ -14,7 +14,6 @@ class Database:
         return self.Session()
 
     def init_db(self):
-        # Tạo bảng (nếu chưa có)
         Base.metadata.create_all(self.engine)
 
 db = Database()

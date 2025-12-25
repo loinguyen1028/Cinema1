@@ -14,7 +14,6 @@ class StaffManager:
 
         self.render()
 
-    # =====================================================
     def render(self):
         self.colors = {
             "bg": "#0f172a",
@@ -31,7 +30,6 @@ class StaffManager:
         container = tk.Frame(self.parent, bg=self.colors["bg"])
         container.pack(fill=tk.BOTH, expand=True, padx=30, pady=25)
 
-        # ===== HEADER =====
         header = tk.Frame(container, bg=self.colors["bg"])
         header.pack(fill=tk.X, pady=(0, 18))
 
@@ -56,7 +54,6 @@ class StaffManager:
             command=lambda: self.open_dialog("add")
         ).pack(side=tk.RIGHT)
 
-        # ===== TABLE =====
         card = tk.Frame(container, bg=self.colors["card"])
         card.pack(fill=tk.BOTH, expand=True)
 
@@ -109,7 +106,6 @@ class StaffManager:
 
         self.tree.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
 
-        # EVENTS
         self.tree.bind("<<TreeviewSelect>>", self.show_action_buttons)
         self.tree.bind("<Configure>", lambda e: self.hide_action_buttons())
         self.tree.bind("<MouseWheel>", lambda e: self.hide_action_buttons())
@@ -118,7 +114,6 @@ class StaffManager:
         self.create_action_buttons()
         self.load_data()
 
-    # =====================================================
     def load_data(self):
         self.hide_action_buttons()
         self.tree.delete(*self.tree.get_children())
@@ -145,8 +140,6 @@ class StaffManager:
                 )
             )
 
-    # =====================================================
-    # ===== ACTION BUTTON SYSTEM =====
     def create_action_buttons(self):
         base = {
             "font": ("Arial", 11),
@@ -201,8 +194,6 @@ class StaffManager:
         for btn in self.action_buttons:
             btn.place_forget()
 
-    # =====================================================
-    # ===== ACTION HANDLERS =====
     def on_edit(self):
         if self.current_action_row:
             self.open_dialog("edit", self.current_action_row)
@@ -220,7 +211,6 @@ class StaffManager:
             else:
                 messagebox.showerror("Lỗi", msg)
 
-    # =====================================================
     def open_dialog(self, mode, staff_id=None):
         StaffDialog(
             self.parent,

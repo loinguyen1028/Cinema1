@@ -14,7 +14,6 @@ class ProductManager:
 
         self.render()
 
-    # =====================================================
     def render(self):
         self.colors = {
             "bg": "#0f172a",
@@ -31,7 +30,6 @@ class ProductManager:
         container = tk.Frame(self.parent, bg=self.colors["bg"])
         container.pack(fill=tk.BOTH, expand=True, padx=30, pady=25)
 
-        # ===== HEADER =====
         header = tk.Frame(container, bg=self.colors["bg"])
         header.pack(fill=tk.X, pady=(0, 18))
 
@@ -56,7 +54,6 @@ class ProductManager:
             command=lambda: self.open_dialog("add")
         ).pack(side=tk.RIGHT)
 
-        # ===== TABLE =====
         card = tk.Frame(container, bg=self.colors["card"])
         card.pack(fill=tk.BOTH, expand=True)
 
@@ -108,7 +105,6 @@ class ProductManager:
 
         self.tree.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
 
-        # EVENTS
         self.tree.bind("<<TreeviewSelect>>", self.show_action_buttons)
         self.tree.bind("<Configure>", lambda e: self.hide_action_buttons())
         self.tree.bind("<MouseWheel>", lambda e: self.hide_action_buttons())
@@ -117,7 +113,6 @@ class ProductManager:
         self.create_action_buttons()
         self.load_data()
 
-    # =====================================================
     def load_data(self):
         self.hide_action_buttons()
         self.tree.delete(*self.tree.get_children())
@@ -138,8 +133,6 @@ class ProductManager:
                 )
             )
 
-    # =====================================================
-    # ===== ACTION BUTTON SYSTEM =====
     def create_action_buttons(self):
         base = {
             "font": ("Arial", 11),
@@ -149,15 +142,21 @@ class ProductManager:
         }
 
         self.btn_edit = tk.Button(
-            self.tree, text="✏",
-            bg=self.colors["edit"], fg="white",
-            command=self.on_edit, **base
+            self.tree,
+            text="✏",
+            bg=self.colors["edit"],
+            fg="white",
+            command=self.on_edit,
+            **base
         )
 
         self.btn_delete = tk.Button(
-            self.tree, text="🗑",
-            bg=self.colors["danger"], fg="white",
-            command=self.on_delete, **base
+            self.tree,
+            text="🗑",
+            bg=self.colors["danger"],
+            fg="white",
+            command=self.on_delete,
+            **base
         )
 
         self.action_buttons = [self.btn_edit, self.btn_delete]
@@ -188,8 +187,6 @@ class ProductManager:
         for btn in self.action_buttons:
             btn.place_forget()
 
-    # =====================================================
-    # ===== ACTION HANDLERS =====
     def on_edit(self):
         if self.current_action_row:
             self.open_dialog("edit", self.current_action_row)
@@ -207,9 +204,11 @@ class ProductManager:
             else:
                 messagebox.showerror("Lỗi", msg)
 
-    # =====================================================
     def open_dialog(self, mode, p_id=None):
-        def on_done():
-            self.load_data()
-
-        ProductDialog(self.parent, self.controller, mode, p_id, on_success=on_done)
+        ProductDialog(
+            self.parent,
+            self.controller,
+            mode,
+            p_id,
+            on_success=self.load_data
+        )

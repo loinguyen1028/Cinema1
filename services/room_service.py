@@ -12,7 +12,6 @@ class RoomService:
         return self.dao.get_room_by_id(room_id)
 
     def save_room(self, mode, room_id, room_name, rows, seats_per_row):
-        # ===== VALIDATE =====
         if not room_name:
             return False, "Tên phòng không được để trống"
 
@@ -30,7 +29,6 @@ class RoomService:
 
         capacity = rows * seats_per_row
 
-        # ===== ADD =====
         if mode == "add":
             return self.dao.create_room_with_seats(
                 room_name=room_name,
@@ -39,7 +37,6 @@ class RoomService:
                 capacity=capacity
             )
 
-        # ===== EDIT =====
         elif mode == "edit":
             return self.dao.update_room_with_seats(
                 room_id=room_id,

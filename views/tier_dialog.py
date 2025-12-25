@@ -10,7 +10,6 @@ class TierDialog(tk.Toplevel):
         self.tier_id = tier_id
         self.on_success = on_success
 
-        # ===== STAFF THEME =====
         self.colors = {
             "bg": "#0f172a",
             "panel": "#111827",
@@ -41,7 +40,6 @@ class TierDialog(tk.Toplevel):
         )
         container.pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
 
-        # ===== TITLE =====
         tk.Label(
             container,
             text="THÔNG TIN HẠNG THÀNH VIÊN",
@@ -50,12 +48,10 @@ class TierDialog(tk.Toplevel):
             fg=self.colors["primary"]
         ).pack(pady=(0, 20))
 
-        # ===== INPUTS =====
         self.e_name = self.create_input(container, "Tên hạng")
         self.e_point = self.create_input(container, "Điểm tối thiểu")
         self.e_discount = self.create_input(container, "Giảm giá (%)")
 
-        # ===== BUTTONS =====
         btn_frame = tk.Frame(container, bg=self.colors["card"])
         btn_frame.pack(pady=25)
 
@@ -103,7 +99,6 @@ class TierDialog(tk.Toplevel):
         e.pack(fill=tk.X, ipady=6, pady=(4, 14))
         return e
 
-    # ===== DATA =====
     def load_data(self):
         tier = self.controller.get_detail(self.tier_id)
         if tier:
@@ -111,7 +106,6 @@ class TierDialog(tk.Toplevel):
             self.e_point.insert(0, str(tier.min_point))
             self.e_discount.insert(0, str(tier.discount_percent))
 
-    # ===== SAVE =====
     def save_action(self):
         name = self.e_name.get()
         point = self.e_point.get()

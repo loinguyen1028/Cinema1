@@ -11,7 +11,7 @@ class TicketService:
         self.customer_dao = CustomerDAO()
         self.product_dao = ProductDAO()
 
-    # --- Lấy dữ liệu ---
+
     def get_movies_by_date(self, date_str, keyword="", genre="Tất cả"):
         all_showtimes = self.showtime_dao.filter_showtimes(date_str=date_str)
         grouped = {}
@@ -38,10 +38,10 @@ class TicketService:
     def search_tickets(self, kw):
         return self.ticket_dao.search_tickets(kw)
 
-    # --- Logic Nghiệp vụ (ĐÃ SỬA) ---
+
 
     def calculate_discount(self, customer_phone, type_selection):
-        # 1. Giảm giá đặc biệt (Sinh viên, Trẻ em...) - Giữ nguyên hardcode hoặc tách bảng riêng sau này
+
         special_rates = {"Sinh viên": 0.20, "Trẻ em": 0.30, "Người cao tuổi": 0.20}
         special_percent = special_rates.get(type_selection, 0.0)
 
@@ -49,27 +49,27 @@ class TicketService:
         member_percent = 0.0
         msg = ""
 
-        # 2. Check thành viên
+
         if customer_phone:
-            # Lưu ý: Hàm get_by_phone trong DAO phải có .options(joinedload(Customer.tier))
+
             customer = self.customer_dao.get_by_phone(customer_phone)
 
             if customer:
-                # --- LOGIC MỚI: Lấy từ bảng membership_tiers ---
+
                 if customer.tier:
-                    # Database lưu số, ví dụ 5.00 (là 5%) -> Chia 100 để ra 0.05
+
                     member_percent = float(customer.tier.discount_percent) / 100
                     level_name = customer.tier.tier_name
                 else:
                     member_percent = 0.0
                     level_name = "Chưa xếp hạng"
-                # -----------------------------------------------
+
 
                 msg = f"Thành viên: {customer.name} ({level_name})"
             else:
                 msg = "Khách vãng lai (SĐT không tồn tại)"
 
-        # 3. Quyết định dùng giảm giá nào (Lấy cái cao nhất)
+
         final_percent = max(special_percent, member_percent)
 
         return customer, final_percent, msg
@@ -80,19 +80,19 @@ class TicketService:
         if not seat_ids:
             return False, "Vui lòng chọn ít nhất 1 ghế!"
 
-        # 1. Trừ điểm (nếu có)
+
         if customer_id and points_used > 0:
             ok, msg_deduct = self.customer_dao.deduct_points(customer_id, points_used)
             if not ok: return False, msg_deduct
 
-        # 2. Tạo vé
+
         success, msg = self.ticket_dao.create_ticket(
             showtime_id, user_id, seat_ids, total_amount,
             customer_id=customer_id,
             products_list=products_list
         )
 
-        # 3. Cộng điểm tích lũy
+
         if success and customer_id:
             ok_add, point_msg = self.customer_dao.update_membership(customer_id, total_amount)
             if ok_add: msg += f"\n({point_msg})"

@@ -1,13 +1,11 @@
 import requests
 
-# 1. Dán API Key của bạn vào đây để test
 MY_KEY = "DÁN_KEY_CỦA_BẠN_VÀO_ĐÂY"
 
 
 def test_connection():
     print(f"--- Đang test với Key: {MY_KEY} ---")
 
-    # Thử tìm phim Titanic
     url = "http://www.omdbapi.com/"
     params = {
         "apikey": MY_KEY,

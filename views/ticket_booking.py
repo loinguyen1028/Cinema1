@@ -16,7 +16,6 @@ class TicketBooking:
 
         self.current_date = datetime.now().strftime("%d/%m/%Y")
 
-        # 🎨 THEME – CHUẨN MOVIEMANAGER
         self.colors = {
             "bg": "#0f172a",
             "panel": "#111827",
@@ -30,7 +29,7 @@ class TicketBooking:
 
         self.render()
 
-    # =====================================================
+
     def render(self):
         self.content = tk.Frame(self.parent, bg=self.colors["bg"])
         self.content.pack(fill=tk.BOTH, expand=True)
@@ -39,9 +38,7 @@ class TicketBooking:
         self.render_scroll_area()
         self.load_data()
 
-    # =====================================================
-    # TOOLBAR
-    # =====================================================
+
     def render_toolbar(self):
         toolbar = tk.Frame(self.content, bg=self.colors["bg"])
         toolbar.pack(fill=tk.X, padx=30, pady=20)
@@ -58,7 +55,7 @@ class TicketBooking:
             font=("Arial", 9)
         ).pack(anchor="w", pady=(0, 4))
 
-        # === BORDER FRAME ===
+
         search_border = tk.Frame(
             f_search,
             bg=self.colors["panel"],
@@ -67,14 +64,14 @@ class TicketBooking:
         )
         search_border.pack()
 
-        # === INNER FRAME (NỀN Ô) ===
+
         search_inner = tk.Frame(
             search_border,
             bg=self.colors["card"]
         )
         search_inner.pack(padx=1, pady=1)
 
-        # ICON
+
         tk.Label(
             search_inner,
             text="🔍",
@@ -83,7 +80,7 @@ class TicketBooking:
             fg=self.colors["muted"]
         ).pack(side=tk.LEFT, padx=(8, 4))
 
-        # ENTRY
+
         self.entry_search = tk.Entry(
             search_inner,
             font=("Arial", 11),
@@ -96,7 +93,7 @@ class TicketBooking:
         self.entry_search.pack(side=tk.LEFT, ipady=7, padx=(0, 10))
         self.entry_search.bind("<KeyRelease>", self.on_filter_change)
 
-        # === FOCUS EFFECT ===
+
         self.entry_search.bind(
             "<FocusIn>",
             lambda e: search_border.config(
@@ -113,7 +110,7 @@ class TicketBooking:
             )
         )
 
-        # -------- GENRE --------
+
         f_genre = tk.Frame(toolbar, bg=self.colors["bg"])
         f_genre.pack(side=tk.LEFT)
 
@@ -178,9 +175,7 @@ class TicketBooking:
         date_box.bind("<Button-1>", open_cal)
         self.lbl_date.bind("<Button-1>", open_cal)
 
-    # =====================================================
-    # SCROLL AREA
-    # =====================================================
+
     def render_scroll_area(self):
         container = tk.Frame(self.content, bg=self.colors["bg"])
         container.pack(fill=tk.BOTH, expand=True, padx=30, pady=10)
@@ -200,9 +195,7 @@ class TicketBooking:
         self.canvas.pack(side="left", fill="both", expand=True)
         scrollbar.pack(side="right", fill="y")
 
-    # =====================================================
-    # LOGIC
-    # =====================================================
+
     def on_date_selected(self, new_date):
         try:
             selected_dt = datetime.strptime(new_date, "%d/%m/%Y")
@@ -243,9 +236,7 @@ class TicketBooking:
         for item in movies_list:
             self.create_movie_card(item["data"], item["showtimes"])
 
-    # =====================================================
-    # MOVIE CARD
-    # =====================================================
+
     def create_movie_card(self, movie, showtimes):
         card = tk.Frame(
             self.scrollable_frame,
@@ -275,7 +266,7 @@ class TicketBooking:
         row = tk.Frame(card, bg=self.colors["card"])
         row.pack(fill=tk.X)
 
-        # POSTER
+
         poster = tk.Frame(row, bg=self.colors["panel"], width=120, height=180)
         poster.pack(side=tk.LEFT)
         poster.pack_propagate(False)
@@ -292,7 +283,7 @@ class TicketBooking:
         else:
             tk.Label(poster, text="POSTER", bg=self.colors["panel"], fg=self.colors["muted"]).pack(expand=True)
 
-        # SHOWTIMES
+
         time_frame = tk.Frame(row, bg=self.colors["card"])
         time_frame.pack(side=tk.LEFT, padx=20, fill=tk.BOTH, expand=True)
 
@@ -331,9 +322,7 @@ class TicketBooking:
                 line = tk.Frame(time_frame, bg=self.colors["card"])
                 line.pack(anchor="w", pady=5)
 
-    # =====================================================
-    # BOOKING
-    # =====================================================
+
     def open_booking(self, showtime_id):
         if self.user_id:
             BookingDialog(self.parent, self.controller, showtime_id, self.user_id)

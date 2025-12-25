@@ -17,7 +17,6 @@ class MovieService:
         return self.movie_dao.get_movie_by_id(movie_id)
 
     def delete_movie(self, movie_id):
-        # Có thể thêm logic kiểm tra: Nếu phim đang có suất chiếu thì không cho xóa
         if self.movie_dao.delete_movie(movie_id):
             return True, "Xóa phim thành công!"
         return False, "Lỗi: Không thể xóa phim này (có thể do ràng buộc dữ liệu)."
@@ -26,10 +25,8 @@ class MovieService:
         """
         Hàm xử lý chung cho cả Thêm và Sửa
         """
-        # 1. VALIDATE DỮ LIỆU
-        # Cắt khoảng trắng thừa ngay từ đầu
         name = name.strip()
-        duration = str(duration).strip() # Chuyển về str trước khi strip để an toàn
+        duration = str(duration).strip()
 
         if not name:
             return False, "Vui lòng nhập tên phim!"
@@ -44,8 +41,6 @@ class MovieService:
         except ValueError:
             return False, "Thời lượng phải là số nguyên (không chứa chữ)!"
 
-        # 2. XỬ LÝ LOGIC (Gọi DAO)
-        # Các tham số khác cũng nên strip() cho sạch đẹp
         if mode == "add":
             success, db_msg = self.movie_dao.add_movie(
                 name, dur_val,
@@ -59,5 +54,5 @@ class MovieService:
                 age, desc, poster
             )
 
-        # 3. TRẢ KẾT QUẢ
+
         return success, db_msg

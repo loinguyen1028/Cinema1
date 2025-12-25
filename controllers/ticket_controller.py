@@ -15,15 +15,14 @@ class TicketController:
     def get_products(self):
         return self.service.get_products()
 
-    # --- Kiểm tra giảm giá thành viên ---
+
     def check_member_discount(self, phone):
-        # Gọi hàm calculate_discount trong service
-        # type_selection mặc định là "Thành viên" khi gọi hàm này
+
         return self.service.calculate_discount(phone, "Người lớn / Thành viên")
 
-    # --- Lấy % giảm giá đặc biệt (Sinh viên/Trẻ em) ---
+
     def get_special_discount(self, customer_type):
-        # Gọi service với sđt=None để chỉ lấy % special
+
         _, percent, _ = self.service.calculate_discount(None, customer_type)
         return percent
 
@@ -47,8 +46,6 @@ class TicketController:
         session = db.get_session()
         try:
             user = session.query(User).get(user_id)
-            # Giả sử bảng User của bạn có cột 'name' hoặc 'fullname'
-            # Nếu cột tên là 'username', hãy sửa thành user.username
             return user.username if user else "Unknown"
         except Exception as e:
             print(f"Lỗi lấy tên user: {e}")

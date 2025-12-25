@@ -17,7 +17,7 @@ class ProductController:
     def delete(self, p_id):
         return self.service.delete_product(p_id)
 
-    # Hàm xử lý bán hàng trực tiếp (Đồ ăn)
+
     def process_direct_sale(self, user_id, total_amount, products_list, customer_id=None):
         ticket_dao = TicketDAO()
         return ticket_dao.create_concession_transaction(user_id, total_amount, products_list, customer_id)

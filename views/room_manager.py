@@ -9,13 +9,11 @@ class RoomManager:
         self.parent = parent_frame
         self.controller = RoomController()
 
-        # ===== STATE =====
         self.action_buttons = []
         self.current_action_row = None
 
         self.render()
 
-    # =====================================================
     def render(self):
         self.colors = {
             "bg": "#0f172a",
@@ -34,7 +32,6 @@ class RoomManager:
         container = tk.Frame(self.parent, bg=self.colors["bg"])
         container.pack(fill=tk.BOTH, expand=True, padx=30, pady=25)
 
-        # ===== HEADER =====
         header = tk.Frame(container, bg=self.colors["bg"])
         header.pack(fill=tk.X, pady=(0, 18))
 
@@ -59,11 +56,9 @@ class RoomManager:
             command=self.open_add_dialog
         ).pack(side=tk.RIGHT)
 
-        # ===== CARD =====
         card = tk.Frame(container, bg=self.colors["card"])
         card.pack(fill=tk.BOTH, expand=True)
 
-        # ===== TREEVIEW STYLE =====
         style = ttk.Style()
         style.theme_use("default")
 
@@ -110,7 +105,6 @@ class RoomManager:
         self.tree.column("actions", stretch=False, anchor="center")
         self.tree.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
 
-        # ===== EVENTS =====
         self.tree.bind("<<TreeviewSelect>>", self.show_action_buttons)
         self.tree.bind("<Configure>", lambda e: self.hide_action_buttons())
         self.tree.bind("<MouseWheel>", lambda e: self.hide_action_buttons())
@@ -119,7 +113,6 @@ class RoomManager:
         self.create_action_buttons()
         self.load_rooms()
 
-    # =====================================================
     def load_rooms(self):
         self.hide_action_buttons()
         self.tree.delete(*self.tree.get_children())
@@ -135,12 +128,10 @@ class RoomManager:
                     room.room_id,
                     room.room_name,
                     room.capacity,
-                    ""  # cell trống
+                    ""
                 )
             )
 
-    # =====================================================
-    # ===== ACTION BUTTON SYSTEM =====
     def create_action_buttons(self):
         base = {
             "font": ("Arial", 11),
@@ -196,8 +187,6 @@ class RoomManager:
         for btn in self.action_buttons:
             btn.place_forget()
 
-    # =====================================================
-    # ===== ACTIONS =====
     def open_add_dialog(self):
         RoomDialog(
             self.parent,

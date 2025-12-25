@@ -10,7 +10,6 @@ class RoomDialog(tk.Toplevel):
         self.room_id = room_id
         self.on_success = on_success
 
-        # ===== STAFF THEME =====
         self.colors = {
             "bg": "#0f172a",
             "panel": "#111827",
@@ -33,7 +32,6 @@ class RoomDialog(tk.Toplevel):
             self.load_data()
 
     def render_ui(self):
-        # ===== CARD =====
         container = tk.Frame(
             self,
             bg=self.colors["card"],
@@ -42,7 +40,6 @@ class RoomDialog(tk.Toplevel):
         )
         container.pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
 
-        # ===== TITLE =====
         tk.Label(
             container,
             text=self.title(),
@@ -51,7 +48,6 @@ class RoomDialog(tk.Toplevel):
             fg=self.colors["primary"]
         ).pack(anchor="w", pady=(0, 20))
 
-        # ===== INPUT STYLE =====
         def label(text):
             tk.Label(
                 container,
@@ -73,19 +69,15 @@ class RoomDialog(tk.Toplevel):
             e.pack(fill=tk.X, ipady=6, pady=(4, 14))
             return e
 
-        # ===== TÊN PHÒNG =====
         label("Tên phòng chiếu")
         self.e_name = entry()
 
-        # ===== SỐ HÀNG =====
         label("Số hàng ghế (A-Z)")
         self.e_rows = entry()
 
-        # ===== SỐ GHẾ / HÀNG =====
         label("Số ghế mỗi hàng")
         self.e_seats_per_row = entry()
 
-        # ===== BUTTON =====
         tk.Button(
             container,
             text="💾 LƯU",
@@ -99,12 +91,6 @@ class RoomDialog(tk.Toplevel):
             command=self.save_action
         ).pack(pady=(10, 0))
 
-        # # Nếu EDIT → khóa cấu trúc ghế
-        # if self.mode == "edit":
-        #     self.e_rows.config(state="disabled")
-        #     self.e_seats_per_row.config(state="disabled")
-
-    # ================= DATA =================
     def load_data(self):
         room = self.controller.get_room_by_id(self.room_id)
         if room:
@@ -116,7 +102,6 @@ class RoomDialog(tk.Toplevel):
             self.e_rows.insert(0, rows)
             self.e_seats_per_row.insert(0, seats_per_row)
 
-    # ================= SAVE =================
     def save_action(self):
         name = self.e_name.get().strip()
         rows = self.e_rows.get().strip()

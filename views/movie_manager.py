@@ -21,13 +21,11 @@ class MovieManager:
             "selected": "#334155"
         }
 
-        # ===== ACTION BUTTON STATE =====
         self.action_buttons = []
         self.current_action_row = None
 
         self.render()
 
-    # =====================================================
     def render(self):
         for w in self.parent.winfo_children():
             w.destroy()
@@ -35,7 +33,6 @@ class MovieManager:
         container = tk.Frame(self.parent, bg=self.colors["bg"])
         container.pack(fill=tk.BOTH, expand=True, padx=30, pady=25)
 
-        # ===== HEADER =====
         header = tk.Frame(container, bg=self.colors["bg"])
         header.pack(fill=tk.X, pady=(0, 18))
 
@@ -60,11 +57,9 @@ class MovieManager:
             command=lambda: self.open_dialog("add")
         ).pack(side=tk.RIGHT)
 
-        # ===== CARD =====
         card = tk.Frame(container, bg=self.colors["card"])
         card.pack(fill=tk.BOTH, expand=True)
 
-        # ===== TREEVIEW STYLE =====
         style = ttk.Style()
         style.theme_use("default")
 
@@ -92,7 +87,6 @@ class MovieManager:
             foreground=[("selected", "#ffffff")]
         )
 
-        # ===== TABLE =====
         columns = ("id", "name", "genre", "actors", "age", "duration", "actions")
         self.tree = ttk.Treeview(
             card,
@@ -113,7 +107,6 @@ class MovieManager:
 
         self.tree.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
 
-        # ===== EVENTS =====
         self.tree.bind("<<TreeviewSelect>>", self.show_action_buttons)
         self.tree.bind("<Configure>", lambda e: self.hide_action_buttons())
         self.tree.bind("<MouseWheel>", lambda e: self.hide_action_buttons())
@@ -122,7 +115,6 @@ class MovieManager:
         self.create_action_buttons()
         self.load_data()
 
-    # =====================================================
     def load_data(self):
         self.hide_action_buttons()
         self.tree.delete(*self.tree.get_children())
@@ -142,12 +134,10 @@ class MovieManager:
                     extra.get("actors", ""),
                     extra.get("age_limit", ""),
                     f"{m.duration_min} phút",
-                    ""  # cell trống – button sẽ đè lên
+                    ""
                 )
             )
 
-    # =====================================================
-    # ===== ACTION BUTTON SYSTEM =====
     def create_action_buttons(self):
         base = {
             "font": ("Arial", 11),
@@ -198,8 +188,6 @@ class MovieManager:
         for btn in self.action_buttons:
             btn.place_forget()
 
-    # =====================================================
-    # ===== BUTTON ACTIONS =====
     def on_view(self):
         if self.current_action_row:
             MovieDetail(self.parent, self.controller, self.current_action_row)
@@ -220,7 +208,6 @@ class MovieManager:
             else:
                 messagebox.showerror("Lỗi", msg)
 
-    # =====================================================
     def open_dialog(self, mode="add", movie_id=None):
         MovieDialog(
             self.parent,

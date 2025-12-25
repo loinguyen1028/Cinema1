@@ -7,9 +7,6 @@ from datetime import datetime
 
 
 class TicketDAO:
-    # ------------------------------------------------------------------
-    # HÀM BÁN VÉ (CÓ TÍCH ĐIỂM)
-    # ------------------------------------------------------------------
     def create_ticket(self, showtime_id, user_id, seat_ids, total_amount, customer_id=None, products_list=None):
         session = db.get_session()
         try:
@@ -25,7 +22,6 @@ class TicketDAO:
             session.add(new_ticket)
             session.flush()
 
-            # 2. Lưu ghế
             if showtime_id:
                 st = session.query(Showtime).get(showtime_id)
                 unit_price = st.ticket_price if st else 0
@@ -40,7 +36,6 @@ class TicketDAO:
                 )
                 session.add(ts)
 
-            # 3. Lưu sản phẩm
             if products_list:
                 for p_id, qty, price in products_list:
                     tp = TicketProduct(
@@ -51,37 +46,33 @@ class TicketDAO:
                     )
                     session.add(tp)
 
-            # =========================================================
-            # 4. LOGIC TÍCH ĐIỂM & THĂNG HẠNG (MỚI THÊM)
-            # =========================================================
             if customer_id:
                 cus = session.query(Customer).get(customer_id)
                 if cus:
-                    # Quy đổi: 1.000 VNĐ = 1 điểm (Bạn có thể sửa số 1000 này)
                     points_added = int(total_amount / 1000)
 
-                    # Lấy thông tin cũ
+
                     current_info = dict(cus.extra_info) if cus.extra_info else {}
                     current_points = current_info.get("points", 0)
 
-                    # Cộng dồn
+
                     new_points = current_points + points_added
 
-                    # Tự động xét hạng
+
                     new_level = "Thân thiết"
-                    if new_points >= 5000:  # 5000 điểm -> Kim cương
+                    if new_points >= 5000:
                         new_level = "Kim cương"
-                    elif new_points >= 2000:  # 2000 điểm -> Vàng
+                    elif new_points >= 2000:
                         new_level = "Vàng"
-                    elif new_points >= 1000:  # 1000 điểm -> Bạc
+                    elif new_points >= 1000:
                         new_level = "Bạc"
 
-                    # Cập nhật lại vào DB
+
                     current_info["points"] = new_points
                     current_info["level"] = new_level
                     cus.extra_info = current_info
 
-                    # (Tùy chọn) In ra console để kiểm tra
+
                     print(
                         f"--- Đã cộng {points_added} điểm cho khách {cus.name}. Tổng: {new_points}. Hạng: {new_level} ---")
             # =========================================================
@@ -96,13 +87,11 @@ class TicketDAO:
         finally:
             session.close()
 
-    # ------------------------------------------------------------------
-    # HÀM BÁN BẮP NƯỚC (CÓ TÍCH ĐIỂM)
-    # ------------------------------------------------------------------
+
     def create_concession_transaction(self, user_id, total_amount, products_list, customer_id=None):
         session = db.get_session()
         try:
-            # 1. Tạo Ticket (Hóa đơn)
+
             new_ticket = Ticket(
                 user_id=user_id,
                 customer_id=customer_id,
@@ -114,7 +103,7 @@ class TicketDAO:
             session.add(new_ticket)
             session.flush()
 
-            # 2. Lưu sản phẩm
+
             for pid, qty, price in products_list:
                 tp = TicketProduct(
                     ticket_id=new_ticket.ticket_id,
@@ -124,22 +113,22 @@ class TicketDAO:
                 )
                 session.add(tp)
 
-            # ===> THÊM ĐOẠN NÀY ĐỂ CỘNG ĐIỂM <===
+
             if customer_id:
-                # Tìm khách hàng
+
                 cus = session.query(Customer).get(customer_id)
                 if cus:
-                    # Quy tắc: 1.000 VNĐ = 1 điểm
+
                     points_added = int(total_amount / 1000)
 
-                    # Lấy thông tin cũ
+
                     current_info = dict(cus.extra_info) if cus.extra_info else {}
                     current_points = current_info.get("points", 0)
 
-                    # Cộng điểm
+
                     new_points = current_points + points_added
 
-                    # Tự động thăng hạng
+
                     new_level = "Thân thiết"
                     if new_points >= 5000:
                         new_level = "Kim cương"
@@ -148,12 +137,12 @@ class TicketDAO:
                     elif new_points >= 1000:
                         new_level = "Bạc"
 
-                    # Lưu lại
+
                     current_info["points"] = new_points
                     current_info["level"] = new_level
                     cus.extra_info = current_info
                     print(f"--- Đã cộng {points_added} điểm. Tổng: {new_points}. Hạng: {new_level} ---")
-            # ====================================
+
 
             session.commit()
             return True, f"Thanh toán thành công! Mã vé: {new_ticket.ticket_id}"
@@ -165,9 +154,7 @@ class TicketDAO:
         finally:
             session.close()
 
-    # ---------------------------------------------------------
-    # QUẢN LÝ VÉ (XEM / TÌM / HỦY) - GIỮ NGUYÊN
-    # ---------------------------------------------------------
+
     def get_all_tickets(self):
         session = db.get_session()
         try:

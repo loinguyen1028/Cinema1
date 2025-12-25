@@ -15,9 +15,9 @@ class MovieController:
         return self.service.get_movie_by_id(movie_id)
 
     def delete(self, movie_id):
-        # Trả về (True/False, Message)
+
         return self.service.delete_movie(movie_id)
 
     def save(self, mode, movie_id, name, duration, country, genre, actors, lang, age, desc, poster):
-        # Gọi Service để xử lý logic và lưu
+
         return self.service.save_movie(mode, movie_id, name, duration, country, genre, actors, lang, age, desc, poster)

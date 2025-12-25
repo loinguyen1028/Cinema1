@@ -25,7 +25,6 @@ class PaymentConfirmDialog(tk.Toplevel):
         self.config(bg=self.colors["bg"])
         self.grab_set()
 
-        # Căn giữa
         x = parent.winfo_rootx() + (parent.winfo_width() // 2) - 210
         y = parent.winfo_rooty() + (parent.winfo_height() // 2) - 190
         self.geometry(f"+{x}+{y}")
@@ -34,11 +33,9 @@ class PaymentConfirmDialog(tk.Toplevel):
         self.e_received.focus_set()
 
     def render_ui(self):
-        # ===== CARD =====
         card = tk.Frame(self, bg=self.colors["card"], padx=25, pady=25)
         card.pack(fill=tk.BOTH, expand=True)
 
-        # ===== TOTAL =====
         tk.Label(
             card,
             text="TỔNG THANH TOÁN",
@@ -55,7 +52,6 @@ class PaymentConfirmDialog(tk.Toplevel):
             fg=self.colors["danger"]
         ).pack(pady=(0, 25))
 
-        # ===== RECEIVED =====
         tk.Label(
             card,
             text="Tiền khách đưa",
@@ -84,7 +80,6 @@ class PaymentConfirmDialog(tk.Toplevel):
             fg=self.colors["muted"]
         ).pack(anchor="e", pady=(2, 0))
 
-        # ===== CHANGE =====
         tk.Label(
             card,
             text="Tiền thừa trả khách",
@@ -103,11 +98,9 @@ class PaymentConfirmDialog(tk.Toplevel):
         )
         self.lbl_change.pack(fill=tk.X)
 
-        # ===== BUTTONS =====
         btn_frame = tk.Frame(card, bg=self.colors["card"])
         btn_frame.pack(fill=tk.X, side=tk.BOTTOM, pady=(25, 0))
 
-        # Nút HỦY (secondary)
         btn_cancel = tk.Button(
             btn_frame,
             text="HỦY",
@@ -122,11 +115,10 @@ class PaymentConfirmDialog(tk.Toplevel):
         )
         btn_cancel.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 12))
 
-        # Nút THANH TOÁN (primary)
         self.btn_confirm = tk.Button(
             btn_frame,
             text="HOÀN TẤT THANH TOÁN",
-            bg="#374151",  # màu disable ban đầu
+            bg="#374151",
             fg="#9ca3af",
             font=("Arial", 11, "bold"),
             relief="flat",
@@ -140,7 +132,6 @@ class PaymentConfirmDialog(tk.Toplevel):
 
         self.bind("<Return>", lambda e: self.confirm_action())
 
-    # ================= LOGIC (GIỮ NGUYÊN) =================
     def calculate_change(self, event=None):
         raw_val = self.e_received.get().replace(",", "").replace(".", "").strip()
 

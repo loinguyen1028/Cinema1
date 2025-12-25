@@ -3,12 +3,12 @@ from tkinter import messagebox
 from dao.auth_dao import AuthDAO
 from controllers.auth_controller import AuthController
 
+
 class LoginWindow:
     def __init__(self, root, on_login_success):
         self.root = root
-        self.on_success = on_login_success  # Hàm callback (launch_app bên main.py)
+        self.on_success = on_login_success
 
-        # Khởi tạo DAO
         self.auth_dao = AuthDAO()
         self.controller = AuthController()
 
@@ -22,7 +22,6 @@ class LoginWindow:
         container = tk.Frame(self.root, bg="#0b0b0b")
         container.pack(fill=tk.BOTH, expand=True)
 
-        # ==== LEFT BRAND PANEL ====
         left = tk.Frame(container, bg="#0b0b0b")
         left.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
@@ -42,7 +41,6 @@ class LoginWindow:
             bg="#0b0b0b"
         ).place(relx=0.5, rely=0.55, anchor="center")
 
-        # ==== RIGHT LOGIN PANEL ====
         right = tk.Frame(container, bg="#111111", width=420)
         right.pack(side=tk.RIGHT, fill=tk.Y)
         right.pack_propagate(False)
@@ -63,28 +61,29 @@ class LoginWindow:
             bg="#111111"
         ).pack(pady=(0, 40))
 
-        # ==== USERNAME ====
         tk.Label(right, text="Tài khoản", fg="#ffffff", bg="#111111").pack(anchor="w", padx=40)
         self.entry_user = tk.Entry(
-            right, font=("Arial", 12),
-            bg="#1c1c1c", fg="white",
+            right,
+            font=("Arial", 12),
+            bg="#1c1c1c",
+            fg="white",
             insertbackground="white",
             relief="flat"
         )
         self.entry_user.pack(fill=tk.X, padx=40, pady=8, ipady=6)
 
-        # ==== PASSWORD ====
         tk.Label(right, text="Mật khẩu", fg="#ffffff", bg="#111111").pack(anchor="w", padx=40)
         self.entry_pass = tk.Entry(
-            right, font=("Arial", 12),
-            bg="#1c1c1c", fg="white",
+            right,
+            font=("Arial", 12),
+            bg="#1c1c1c",
+            fg="white",
             insertbackground="white",
             relief="flat",
             show="*"
         )
         self.entry_pass.pack(fill=tk.X, padx=40, pady=8, ipady=6)
 
-        # ==== LOGIN BUTTON ====
         self.btn_login = tk.Button(
             right,
             text="ĐĂNG NHẬP",
@@ -97,7 +96,6 @@ class LoginWindow:
         )
         self.btn_login.pack(fill=tk.X, padx=40, pady=35, ipady=10)
 
-        # Hover effect
         self.btn_login.bind("<Enter>", lambda e: self.btn_login.config(bg="#ffd54f"))
         self.btn_login.bind("<Leave>", lambda e: self.btn_login.config(bg="#f5c518"))
 
@@ -112,24 +110,14 @@ class LoginWindow:
             messagebox.showwarning("Thông báo", "Vui lòng nhập đầy đủ thông tin")
             return
 
-        # Gọi Controller
         user, msg = self.controller.login(username, password)
 
         if user:
-            # --- TRƯỜNG HỢP THÀNH CÔNG ---
-            # 1. Hủy bind phím Enter để tránh lỗi ở màn hình sau
             try:
                 self.root.unbind('<Return>')
             except:
-                pass  # Bỏ qua nếu không tìm thấy root
+                pass
 
-            # 2. Xóa giao diện đăng nhập (nếu cần thiết, tùy cách bạn quản lý view)
-            # self.destroy() hoặc self.login_frame.destroy() tùy vào cấu trúc class của bạn
-
-            # 3. Chuyển sang màn hình chính
             self.on_success(user)
-
         else:
-            # --- TRƯỜNG HỢP THẤT BẠI ---
-            # Hiện đúng cái msg mà Service trả về (Sai pass, Khóa, Không tồn tại...)
             messagebox.showerror("Đăng nhập thất bại", msg)

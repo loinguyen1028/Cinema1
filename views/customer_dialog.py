@@ -16,7 +16,6 @@ class CustomerDialog(tk.Toplevel):
         self.config(bg="#121212")
         self.grab_set()
 
-        # Theme
         self.colors = {
             "bg": "#121212",
             "panel": "#1a1a1a",
@@ -32,12 +31,10 @@ class CustomerDialog(tk.Toplevel):
         if mode == "edit" and customer_id:
             self.load_data()
 
-    # ================= UI =================
     def render_ui(self):
         container = tk.Frame(self, bg=self.colors["panel"], padx=30, pady=25)
         container.pack(fill=tk.BOTH, expand=True)
 
-        # ===== Title =====
         tk.Label(
             container,
             text="➕ THÊM KHÁCH HÀNG" if self.mode == "add" else "✏️ CẬP NHẬT KHÁCH HÀNG",
@@ -46,13 +43,17 @@ class CustomerDialog(tk.Toplevel):
             bg=self.colors["panel"]
         ).pack(anchor="w", pady=(0, 20))
 
-        # ===== Inputs =====
         self.e_name = self.create_input(container, "Họ và tên")
         self.e_phone = self.create_input(container, "Số điện thoại")
         self.e_email = self.create_input(container, "Email")
 
-        # ===== Ngày sinh =====
-        tk.Label(container, text="Ngày sinh", bg=self.colors["panel"], fg=self.colors["muted"]).pack(anchor="w")
+        tk.Label(
+            container,
+            text="Ngày sinh",
+            bg=self.colors["panel"],
+            fg=self.colors["muted"]
+        ).pack(anchor="w")
+
         f_dob = tk.Frame(container, bg=self.colors["panel"])
         f_dob.pack(fill=tk.X, pady=(0, 12))
 
@@ -84,11 +85,9 @@ class CustomerDialog(tk.Toplevel):
             font=("Arial", 12)
         ).pack(side=tk.LEFT, padx=6)
 
-        # ===== Points & Level =====
         row = tk.Frame(container, bg=self.colors["panel"])
         row.pack(fill=tk.X, pady=5)
 
-        # Points
         f_points = tk.Frame(row, bg=self.colors["panel"])
         f_points.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 10))
 
@@ -110,7 +109,6 @@ class CustomerDialog(tk.Toplevel):
         self.e_points.insert(0, "0")
         self.e_points.pack(fill=tk.X, ipady=6)
 
-        # Level
         f_level = tk.Frame(row, bg=self.colors["panel"])
         f_level.pack(side=tk.LEFT, fill=tk.X, expand=True)
 
@@ -130,12 +128,10 @@ class CustomerDialog(tk.Toplevel):
         self.cbo_level.current(0)
         self.cbo_level.pack(fill=tk.X, ipady=4)
 
-        # ===== Khóa khi thêm =====
         if self.mode == "add":
             self.e_points.config(state="readonly")
             self.cbo_level.config(state="disabled")
 
-        # ===== Buttons =====
         btns = tk.Frame(container, bg=self.colors["panel"])
         btns.pack(fill=tk.X, pady=30)
 
@@ -157,7 +153,6 @@ class CustomerDialog(tk.Toplevel):
             command=self.save_action
         ).pack(side=tk.RIGHT)
 
-    # ================= Helpers =================
     def create_input(self, parent, label):
         tk.Label(
             parent,
@@ -177,7 +172,6 @@ class CustomerDialog(tk.Toplevel):
         e.pack(fill=tk.X, ipady=6, pady=(0, 12))
         return e
 
-    # ================= DATA =================
     def load_data(self):
         cus = self.controller.get_detail(self.customer_id)
         if cus:
@@ -198,7 +192,6 @@ class CustomerDialog(tk.Toplevel):
             self.cbo_level.set(tier_name)
             self.cbo_level.config(state="disabled")
 
-    # ================= SAVE =================
     def save_action(self):
         name = self.e_name.get().strip()
         phone = self.e_phone.get().strip()

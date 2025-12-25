@@ -12,7 +12,6 @@ class ProductDialog(tk.Toplevel):
         self.product_id = product_id
         self.on_success = on_success
 
-        # ===== THEME ĐỒNG BỘ =====
         self.colors = {
             "bg": "#0f172a",
             "panel": "#111827",
@@ -34,7 +33,6 @@ class ProductDialog(tk.Toplevel):
 
         self.render_ui()
 
-    # ================= DATA =================
     def load_initial_data(self):
         data = {"name": "", "category": "Đồ ăn", "price": "0"}
 
@@ -48,7 +46,6 @@ class ProductDialog(tk.Toplevel):
                     self.current_image_path = p.image_path
         return data
 
-    # ================= UI =================
     def render_ui(self):
         container = tk.Frame(
             self,
@@ -58,7 +55,6 @@ class ProductDialog(tk.Toplevel):
         )
         container.pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
 
-        # Title
         tk.Label(
             container,
             text=self.title(),
@@ -67,7 +63,6 @@ class ProductDialog(tk.Toplevel):
             fg=self.colors["primary"]
         ).pack(anchor="w", pady=(0, 20))
 
-        # Helpers
         def label(text):
             tk.Label(
                 container,
@@ -89,12 +84,10 @@ class ProductDialog(tk.Toplevel):
             e.pack(fill=tk.X, ipady=6, pady=(4, 14))
             return e
 
-        # ===== TÊN =====
         label("Tên sản phẩm")
         self.e_name = entry()
         self.e_name.insert(0, self.product_data["name"])
 
-        # ===== LOẠI =====
         label("Loại sản phẩm")
         self.cbo_cat = ttk.Combobox(
             container,
@@ -105,12 +98,10 @@ class ProductDialog(tk.Toplevel):
         self.cbo_cat.set(self.product_data["category"])
         self.cbo_cat.pack(fill=tk.X, ipady=4, pady=(4, 14))
 
-        # ===== GIÁ =====
         label("Giá bán (VND)")
         self.e_price = entry()
         self.e_price.insert(0, self.product_data["price"])
 
-        # ===== ẢNH =====
         label("Hình ảnh sản phẩm")
 
         img_frame = tk.Frame(container, bg=self.colors["card"])
@@ -142,7 +133,6 @@ class ProductDialog(tk.Toplevel):
         if self.current_image_path:
             self.load_image_to_label(self.current_image_path)
 
-        # ===== BUTTON =====
         btn_frame = tk.Frame(container, bg=self.colors["card"])
         btn_frame.pack(side=tk.BOTTOM, fill=tk.X, pady=(10, 0))
 
@@ -172,7 +162,6 @@ class ProductDialog(tk.Toplevel):
             command=self.destroy
         ).pack(side=tk.RIGHT)
 
-    # ================= IMAGE =================
     def choose_image(self):
         file_path = filedialog.askopenfilename(
             title="Chọn ảnh",
@@ -194,7 +183,6 @@ class ProductDialog(tk.Toplevel):
         except Exception as e:
             print(f"Lỗi load ảnh: {e}")
 
-    # ================= SAVE =================
     def save_action(self):
         name = self.e_name.get().strip()
         cat = self.cbo_cat.get()

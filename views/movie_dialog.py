@@ -43,7 +43,6 @@ class MovieDialog(tk.Toplevel):
         self.movie_data = self.load_initial_data()
         self.render_ui()
 
-    # =====================================================
     def load_initial_data(self):
         data = {
             "name": "", "genre": "", "actors": "", "lang": "Lồng tiếng",
@@ -65,7 +64,6 @@ class MovieDialog(tk.Toplevel):
                 data["age"] = extra.get("age_limit", "16")
         return data
 
-    # =====================================================
     def render_ui(self):
         container = tk.Frame(self, bg=self.colors["bg"], padx=30, pady=25)
         container.pack(fill=tk.BOTH, expand=True)
@@ -78,7 +76,6 @@ class MovieDialog(tk.Toplevel):
             fg=self.colors["primary"]
         ).pack(anchor="w", pady=(0, 20))
 
-        # ROW 1
         row1 = tk.Frame(container, bg=self.colors["bg"])
         row1.pack(fill=tk.X)
 
@@ -94,40 +91,45 @@ class MovieDialog(tk.Toplevel):
 
         self.lb_genre = self.create_genre_box(row1)
 
-        # ROW 2
         row2 = tk.Frame(container, bg=self.colors["bg"])
         row2.pack(fill=tk.X, pady=10)
 
         self.e_actors = self.create_input(row2, "Diễn viên", self.movie_data["actors"], expand=True)
         self.e_duration = self.create_input(row2, "Thời lượng (phút)", self.movie_data["duration"], width=15)
-        self.cbo_country = self.create_combo(row2, "Quốc gia", self.movie_data["country"],
-                                             ["Việt Nam", "Mỹ", "Hàn Quốc", "Thái Lan"], width=18)
+        self.cbo_country = self.create_combo(
+            row2, "Quốc gia", self.movie_data["country"],
+            ["Việt Nam", "Mỹ", "Hàn Quốc", "Thái Lan"], width=18
+        )
 
-        # ROW 3
         row3 = tk.Frame(container, bg=self.colors["bg"])
         row3.pack(fill=tk.X, pady=10)
 
-        self.cbo_lang = self.create_combo(row3, "Hình thức",
-                                          self.movie_data["lang"],
-                                          ["Lồng tiếng", "Phụ đề", "Thuyết minh"], expand=True)
+        self.cbo_lang = self.create_combo(
+            row3, "Hình thức",
+            self.movie_data["lang"],
+            ["Lồng tiếng", "Phụ đề", "Thuyết minh"], expand=True
+        )
 
-        self.cbo_age = self.create_combo(row3, "Giới hạn tuổi", self.movie_data["age"],
-                                         ["P", "13", "16", "18"], width=15)
+        self.cbo_age = self.create_combo(
+            row3, "Giới hạn tuổi", self.movie_data["age"],
+            ["P", "13", "16", "18"], width=15
+        )
 
-        # ROW 4
         row4 = tk.Frame(container, bg=self.colors["bg"])
         row4.pack(fill=tk.BOTH, expand=True, pady=10)
 
         self.txt_desc = self.create_textarea(row4, "Mô tả", self.movie_data["desc"])
         self.create_poster_panel(row4)
 
-    # =====================================================
     def create_input(self, parent, label, value, expand=False, width=None):
         f = tk.Frame(parent, bg=self.colors["bg"])
         f.pack(side=tk.LEFT, fill=tk.X, expand=expand, padx=5)
         tk.Label(f, text=label, fg=self.colors["muted"], bg=self.colors["bg"], font=("Arial", 9)).pack(anchor="w")
-        e = tk.Entry(f, font=("Arial", 11), bg=self.colors["input"], fg=self.colors["text"],
-                     insertbackground="white", relief="flat", width=width)
+        e = tk.Entry(
+            f, font=("Arial", 11),
+            bg=self.colors["input"], fg=self.colors["text"],
+            insertbackground="white", relief="flat", width=width
+        )
         e.insert(0, value)
         e.pack(fill=tk.X, ipady=6, pady=4)
         return e
@@ -145,8 +147,11 @@ class MovieDialog(tk.Toplevel):
         f = tk.Frame(parent, bg=self.colors["bg"])
         f.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         tk.Label(f, text=label, fg=self.colors["muted"], bg=self.colors["bg"], font=("Arial", 9)).pack(anchor="w")
-        txt = tk.Text(f, font=("Arial", 11), bg=self.colors["input"],
-                      fg=self.colors["text"], insertbackground="white", height=8, relief="flat")
+        txt = tk.Text(
+            f, font=("Arial", 11),
+            bg=self.colors["input"], fg=self.colors["text"],
+            insertbackground="white", height=8, relief="flat"
+        )
         txt.insert("1.0", value)
         txt.pack(fill=tk.BOTH, expand=True, pady=4)
         return txt
@@ -155,9 +160,11 @@ class MovieDialog(tk.Toplevel):
         f = tk.Frame(parent, bg=self.colors["bg"], width=220)
         f.pack(side=tk.RIGHT, padx=10)
         tk.Label(f, text="Thể loại", fg=self.colors["muted"], bg=self.colors["bg"], font=("Arial", 9)).pack(anchor="w")
-        lb = tk.Listbox(f, selectmode=tk.MULTIPLE, height=5,
-                        bg=self.colors["input"], fg=self.colors["text"],
-                        selectbackground=self.colors["btn"], relief="flat")
+        lb = tk.Listbox(
+            f, selectmode=tk.MULTIPLE, height=5,
+            bg=self.colors["input"], fg=self.colors["text"],
+            selectbackground=self.colors["btn"], relief="flat"
+        )
         genres = ["Hành động", "Kinh dị", "Tình cảm", "Hài", "Hoạt hình", "Viễn tưởng", "Tâm lý", "Gia đình"]
         for g in genres:
             lb.insert(tk.END, g)
@@ -166,7 +173,6 @@ class MovieDialog(tk.Toplevel):
         lb.pack(fill=tk.X)
         return lb
 
-    # =====================================================
     def create_poster_panel(self, parent):
         right = tk.Frame(parent, bg=self.colors["bg"], width=220)
         right.pack(side=tk.RIGHT, fill=tk.Y, padx=15)
@@ -201,7 +207,6 @@ class MovieDialog(tk.Toplevel):
         if self.current_poster_path:
             self.load_image_to_label(self.current_poster_path)
 
-    # =====================================================
     def load_image_to_label(self, path):
         if not os.path.exists(path):
             return
@@ -222,7 +227,6 @@ class MovieDialog(tk.Toplevel):
             self.current_poster_path = path
             self.load_image_to_label(path)
 
-    # =====================================================
     def auto_fill_data(self):
         name = self.e_name.get().strip()
         if not name:
@@ -244,7 +248,6 @@ class MovieDialog(tk.Toplevel):
 
         messagebox.showinfo("Thành công", f"Đã tải dữ liệu phim: {info.get('title')}")
 
-    # =====================================================
     def save_action(self):
         genres = ", ".join(self.lb_genre.get(i) for i in self.lb_genre.curselection())
         success, msg = self.controller.save(

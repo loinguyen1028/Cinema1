@@ -14,7 +14,6 @@ class TierManager:
 
         self.render()
 
-    # =====================================================
     def render(self):
         for w in self.parent.winfo_children():
             w.destroy()
@@ -34,7 +33,7 @@ class TierManager:
         container = tk.Frame(self.parent, bg=self.colors["bg"])
         container.pack(fill=tk.BOTH, expand=True, padx=30, pady=25)
 
-        # ===== HEADER =====
+
         header = tk.Frame(container, bg=self.colors["bg"])
         header.pack(fill=tk.X, pady=(0, 18))
 

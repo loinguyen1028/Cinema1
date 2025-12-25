@@ -17,7 +17,6 @@ class StaffApp:
         self.root.title("LHQ Cinema - Staff")
         self.root.geometry("1300x750")
 
-        # ===== MOVIE MANAGER THEME =====
         self.colors = {
             "bg": "#0f172a",
             "panel": "#111827",
@@ -28,12 +27,10 @@ class StaffApp:
             "hover": "#0f172a"
         }
 
-        # --- SIDEBAR ---
         self.sidebar_frame = tk.Frame(root, bg=self.colors["panel"], width=250)
         self.sidebar_frame.pack(side=tk.LEFT, fill=tk.Y)
         self.sidebar_frame.pack_propagate(False)
 
-        # --- MAIN AREA ---
         self.main_area = tk.Frame(root, bg=self.colors["bg"])
         self.main_area.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
@@ -46,7 +43,6 @@ class StaffApp:
         self.create_sidebar()
         self.switch_page("Phim")
 
-    # ================= HEADER =================
     def create_header(self):
         header = tk.Frame(self.main_area, bg=self.colors["panel"], height=60)
         header.pack(fill=tk.X, side=tk.TOP)
@@ -98,7 +94,6 @@ class StaffApp:
         else:
             messagebox.showerror("Lỗi", "Không xác định được tài khoản!")
 
-    # ================= SIDEBAR =================
     def create_sidebar(self):
         logo_frame = tk.Frame(self.sidebar_frame, bg=self.colors["panel"], height=80)
         logo_frame.pack(fill=tk.X, pady=20)
@@ -166,7 +161,6 @@ class StaffApp:
             btn_frame.bind("<Enter>", lambda e, f=btn_frame: on_enter(f))
             btn_frame.bind("<Leave>", lambda e, f=btn_frame, n=name: on_leave(f, n))
 
-    # ================= PAGE SWITCH =================
     def switch_page(self, page_name):
         self.active_page = page_name
 

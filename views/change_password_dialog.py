@@ -4,13 +4,13 @@ from controllers.auth_controller import AuthController
 
 
 class ChangePasswordDialog(tk.Toplevel):
-    def __init__(self, parent, user_id):  # Nhận user_id thay vì controller cũ
+    def __init__(self, parent, user_id):
         super().__init__(parent)
         self.user_id = user_id
         self.controller = AuthController()
 
         self.title("Đổi mật khẩu")
-        self.geometry("400x320")  # Tăng chiều cao
+        self.geometry("400x320")
         self.config(bg="white")
         self.resizable(False, False)
         self.grab_set()
@@ -25,17 +25,17 @@ class ChangePasswordDialog(tk.Toplevel):
                                                                                                             pady=(0,
                                                                                                                   20))
 
-        # 1. Mật khẩu cũ
+
         tk.Label(container, text="Mật khẩu cũ", bg="white", fg="#555").pack(anchor="w")
         self.e_old = tk.Entry(container, font=("Arial", 11), show="*")
         self.e_old.pack(fill=tk.X, ipady=4, pady=(0, 10))
 
-        # 2. Mật khẩu mới
+
         tk.Label(container, text="Mật khẩu mới", bg="white", fg="#555").pack(anchor="w")
         self.e_new = tk.Entry(container, font=("Arial", 11), show="*")
         self.e_new.pack(fill=tk.X, ipady=4, pady=(0, 10))
 
-        # 3. Nhập lại
+
         tk.Label(container, text="Nhập lại mật khẩu mới", bg="white", fg="#555").pack(anchor="w")
         self.e_confirm = tk.Entry(container, font=("Arial", 11), show="*")
         self.e_confirm.pack(fill=tk.X, ipady=4, pady=(0, 10))

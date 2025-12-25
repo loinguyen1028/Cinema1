@@ -12,15 +12,14 @@ from views.tier_manager import TierManager
 from views.stat_manager import StatManager
 
 
-# ================== THEME CHUẨN (DÙNG CHUNG STAFF + ADMIN) ==================
 THEME = {
-    "bg": "#0f172a",        # nền chính
-    "panel": "#111827",     # sidebar / header
-    "card": "#1f2933",      # card
-    "primary": "#facc15",   # màu nhấn
-    "text": "#e5e7eb",      # chữ chính
-    "muted": "#9ca3af",     # chữ phụ
-    "hover": "#0f172a",     # hover sidebar
+    "bg": "#0f172a",
+    "panel": "#111827",
+    "card": "#1f2933",
+    "primary": "#facc15",
+    "text": "#e5e7eb",
+    "muted": "#9ca3af",
+    "hover": "#0f172a",
     "border": "#374151"
 }
 
@@ -36,7 +35,6 @@ class CinemaApp:
         self.root.title("LHQ Cinema - Admin")
         self.root.geometry("1300x750")
 
-        # ================= SIDEBAR =================
         self.sidebar_frame = tk.Frame(
             root,
             bg=self.colors["panel"],
@@ -45,7 +43,6 @@ class CinemaApp:
         self.sidebar_frame.pack(side=tk.LEFT, fill=tk.Y)
         self.sidebar_frame.pack_propagate(False)
 
-        # ================= MAIN AREA =================
         self.main_area = tk.Frame(root, bg=self.colors["bg"])
         self.main_area.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
@@ -54,7 +51,6 @@ class CinemaApp:
         self.body_frame = tk.Frame(self.main_area, bg=self.colors["bg"])
         self.body_frame.pack(fill=tk.BOTH, expand=True)
 
-        # ================= MENU DATA =================
         self.menu_data = [
             ("Quản lí phim", "🎬"),
             ("Quản lí suất chiếu", "🎞"),
@@ -70,7 +66,6 @@ class CinemaApp:
         self.create_sidebar()
         self.switch_page("Quản lí phim")
 
-    # ================= HEADER =================
     def create_header(self):
         header = tk.Frame(self.main_area, bg=self.colors["panel"], height=60)
         header.pack(fill=tk.X, side=tk.TOP)
@@ -122,7 +117,6 @@ class CinemaApp:
         else:
             messagebox.showerror("Lỗi", "Không xác định được tài khoản!")
 
-    # ================= SIDEBAR =================
     def create_sidebar(self):
         logo_frame = tk.Frame(self.sidebar_frame, bg=self.colors["panel"], height=80)
         logo_frame.pack(fill=tk.X, pady=20)
@@ -185,7 +179,6 @@ class CinemaApp:
             btn_frame.bind("<Enter>", lambda e, f=btn_frame: on_enter(f))
             btn_frame.bind("<Leave>", lambda e, f=btn_frame, n=name: on_leave(f, n))
 
-    # ================= PAGE SWITCH =================
     def switch_page(self, page_name):
         self.update_sidebar_visuals(page_name)
 

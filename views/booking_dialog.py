@@ -19,7 +19,6 @@ class BookingDialog(tk.Toplevel):
         self.config(bg="#121212")
         self.grab_set()
 
-        # ================= THEME =================
         self.colors = {
             "bg": "#121212",
             "panel": "#1a1a1a",
@@ -52,13 +51,7 @@ class BookingDialog(tk.Toplevel):
 
         self.render_ui()
 
-    # ==================================================
-    # UI
-    # ==================================================
-
-
     def render_ui(self):
-        # ---------------- LEFT PANEL ----------------
         left = tk.Frame(self, bg=self.colors["panel"], width=360)
         left.pack(side=tk.LEFT, fill=tk.Y)
         left.pack_propagate(False)
@@ -88,7 +81,6 @@ class BookingDialog(tk.Toplevel):
         info_row("Suất:", self.st.start_time.strftime("%H:%M"))
         info_row("Giá vé:", f"{int(self.st.ticket_price):,} đ")
 
-        # -------- ƯU ĐÃI --------
         promo = tk.LabelFrame(
             left, text="ƯU ĐÃI & THÀNH VIÊN",
             bg=self.colors["panel"],
@@ -136,7 +128,6 @@ class BookingDialog(tk.Toplevel):
         )
         self.lbl_member_info.pack(anchor="w", padx=10, pady=5)
 
-        # -------- BẮP NƯỚC --------
         food = tk.LabelFrame(
             left, text="BẮP & NƯỚC",
             bg=self.colors["panel"],
@@ -163,7 +154,6 @@ class BookingDialog(tk.Toplevel):
         )
         self.lbl_food_list.pack(side=tk.LEFT, padx=10, pady=10)
 
-        # -------- THANH TOÁN --------
         tk.Label(
             left,
             text="THANH TOÁN",
@@ -205,7 +195,6 @@ class BookingDialog(tk.Toplevel):
             command=self.on_payment
         ).pack(side=tk.RIGHT)
 
-        # ---------------- RIGHT PANEL ----------------
         right = tk.Frame(self, bg=self.colors["bg"])
         right.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
@@ -217,7 +206,6 @@ class BookingDialog(tk.Toplevel):
             font=("Arial", 18, "bold")
         ).pack(pady=(15, 5))
 
-        # ===== LEGEND (QUY ƯỚC MÀU GHẾ) =====
         self.render_seat_legend(right)
 
         self.canvas = tk.Canvas(
@@ -228,6 +216,7 @@ class BookingDialog(tk.Toplevel):
         self.canvas.pack(fill=tk.BOTH, expand=True, padx=20, pady=10)
 
         self.load_seat_map()
+
     def render_seat_legend(self, parent):
         legend = tk.Frame(parent, bg=self.colors["bg"])
         legend.pack(pady=(0, 10))
@@ -256,9 +245,7 @@ class BookingDialog(tk.Toplevel):
         item(self.colors["seat_free"], "Ghế trống")
         item(self.colors["seat_select"], "Ghế đang chọn")
         item(self.colors["seat_booked"], "Ghế đã bán")
-    # ==================================================
-    # SEAT MAP
-    # ==================================================
+
     def load_seat_map(self):
         all_seats = self.seat_dao.get_seats_by_room(self.st.room_id)
         booked_ids = self.seat_dao.get_booked_seat_ids(self.st.showtime_id)
@@ -274,9 +261,6 @@ class BookingDialog(tk.Toplevel):
 
         self.seat_objects = {}
 
-        # ===============================
-        # 🎬 VẼ MÀN HÌNH CHIẾU
-        # ===============================
         max_cols = max(len(v) for v in rows.values()) if rows else 0
         total_width = max_cols * (SEAT_W + GAP_X)
         start_x = max(80, (900 - total_width) // 2)
@@ -286,24 +270,21 @@ class BookingDialog(tk.Toplevel):
         screen_w = total_width + 120
         screen_x = start_x - 60
 
-        # Bóng
         self.canvas.create_rectangle(
             screen_x + 6, screen_y + 6,
             screen_x + screen_w + 6, screen_y + screen_h + 6,
             fill="#111", outline=""
         )
 
-        # Thân màn hình
         self.canvas.create_rectangle(
             screen_x, screen_y,
             screen_x + screen_w, screen_y + screen_h,
             fill="#e0e0e0", outline="#999", width=2
         )
 
-        # Ánh sáng hắt
         self.canvas.create_rectangle(
             screen_x, screen_y + screen_h,
-                      screen_x + screen_w, screen_y + screen_h + 18,
+            screen_x + screen_w, screen_y + screen_h + 18,
             fill="#f5f5f5", outline=""
         )
 
@@ -315,10 +296,7 @@ class BookingDialog(tk.Toplevel):
             fill="#555"
         )
 
-        # ===============================
-        # 🎟️ VẼ GHẾ
-        # ===============================
-        y = screen_y + screen_h + 40  # Cách màn hình
+        y = screen_y + screen_h + 40
 
         for r in sorted(rows):
             x = start_x
@@ -371,9 +349,6 @@ class BookingDialog(tk.Toplevel):
         d["selected"] = not d["selected"]
         self.update_total()
 
-    # ==================================================
-    # LOGIC KHÁC (GIỮ NGUYÊN)
-    # ==================================================
     def open_concession_dialog(self):
         ConcessionDialog(self, self.controller,
                          initial_selection=self.selected_products,
@@ -386,12 +361,9 @@ class BookingDialog(tk.Toplevel):
     def on_type_change(self, event):
         cust_type = self.cbo_type.get()
 
-        # 2. Nếu là Sinh viên hoặc Trẻ em -> Gọi Controller lấy % giảm giá
         if cust_type in ["Sinh viên", "Trẻ em"]:
-            # Hàm này sẽ gọi xuống Service để lấy mức giảm (ví dụ 0.2 hoặc 0.5)
             self.special_discount_percent = self.controller.get_special_discount(cust_type)
         else:
-            # Nếu chọn lại "Người lớn" thì reset về 0
             self.special_discount_percent = 0.0
 
         self.update_total()
@@ -405,10 +377,8 @@ class BookingDialog(tk.Toplevel):
         self.update_total()
 
     def update_total(self):
-        # 1. Tính tiền vé
         ticket_total = len(self.selected_seats) * float(self.st.ticket_price)
 
-        # 2. Tính tiền bắp nước
         food_total = 0
         food_text_list = []
 
@@ -416,28 +386,20 @@ class BookingDialog(tk.Toplevel):
             for v in self.selected_products.values():
                 food_total += float(v["obj"].price) * v["qty"]
                 p_name = getattr(v["obj"], "name", "Món")
-                # Thêm dấu gạch đầu dòng cho đẹp
                 food_text_list.append(f"- {v['qty']}x {p_name}")
 
-            # ===> SỬA: Dùng xuống dòng (\n) thay vì dấu phẩy
             food_display_str = "\n".join(food_text_list)
         else:
             food_display_str = "Chưa chọn món"
 
         subtotal = ticket_total + food_total
 
-        # ===> ĐOẠN SỬA ĐỔI QUAN TRỌNG <===
-        # So sánh giữa Giảm giá thành viên (SĐT) và Giảm giá đối tượng (SV/Trẻ em)
-        # Cái nào cao hơn thì lấy cái đó (Tránh cộng dồn lỗ vốn)
-        # Ví dụ: Thành viên giảm 5%, nhưng Sinh viên giảm 20% -> Lấy 20%
         final_discount_percent = max(self.member_discount_percent, self.special_discount_percent)
 
         discount = subtotal * final_discount_percent
         final = subtotal - discount
         self.final_total_amount = final
-        # =================================
 
-        # Cập nhật giao diện
         seats = [d["lbl"] for d in self.seat_objects.values() if d["selected"]]
         self.lbl_seat_list.config(text=f"Ghế: {', '.join(seats)}")
 
@@ -445,7 +407,6 @@ class BookingDialog(tk.Toplevel):
 
         self.lbl_subtotal.config(text=f"Tạm tính: {int(subtotal):,} đ")
 
-        # Hiển thị rõ giảm bao nhiêu tiền và bao nhiêu %
         if discount > 0:
             percent_text = int(final_discount_percent * 100)
             self.lbl_discount.config(
@@ -463,7 +424,6 @@ class BookingDialog(tk.Toplevel):
             return
 
         def do_pay():
-
             cus_id = self.current_customer.customer_id if self.current_customer else None
 
             success, msg = self.controller.process_payment(
@@ -471,26 +431,22 @@ class BookingDialog(tk.Toplevel):
                 self.user_id,
                 list(self.selected_seats),
                 self.final_total_amount,
-                customer_id = cus_id
+                customer_id=cus_id
             )
 
             if success:
-                # 1. Lấy tên người bán
                 seller_name = self.controller.get_user_name(self.user_id)
 
-                # 2. Tạo chuỗi ghế
                 seat_labels = ", ".join(
                     d["lbl"] for d in self.seat_objects.values() if d["selected"]
                 )
 
-                # 3. Lấy Ticket ID từ thông báo
                 import re
                 ticket_id = "UNKNOWN"
                 match = re.search(r"Mã vé:\s*(\d+)", msg)
                 if match:
                     ticket_id = match.group(1)
 
-                # 4. Tạo chuỗi danh sách Bắp/Nước
                 food_str_for_print = ""
                 if self.selected_products:
                     items = []
@@ -498,9 +454,7 @@ class BookingDialog(tk.Toplevel):
                         p_name = getattr(v["obj"], "name", "Món")
                         items.append(f"{v['qty']}x {p_name}")
                     food_str_for_print = ", ".join(items)
-                # ============================
 
-                # 5. Đóng gói dữ liệu in vé
                 ticket_data = {
                     "movie_name": self.st.movie.title,
                     "format": "2D/Digital",

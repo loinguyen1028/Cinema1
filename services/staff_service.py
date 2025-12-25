@@ -24,11 +24,11 @@ class StaffService:
         email = data.get('email', '').strip()
         username = data.get('username', '').strip()
 
-        # Kiểm tra rỗng
+
         if not name: return False, "Họ tên không được để trống"
         if not phone: return False, "SĐT không được để trống"
 
-        # Kiểm tra định dạng Số điện thoại (Phải là số, độ dài 9-11)
+
         if not phone.isdigit():
             return False, "Số điện thoại chỉ được chứa các chữ số (0-9)!"
         if len(phone) < 9 or len(phone) > 11:
@@ -36,7 +36,7 @@ class StaffService:
         if not phone.startswith("0"):
             return False, "Số điện thoại phải bắt đầu bằng số 0!"
 
-        # Kiểm tra định dạng Email (Nếu có nhập)
+
         if email:
             email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
             if not re.match(email_pattern, email):
@@ -45,7 +45,7 @@ class StaffService:
         if mode == "add":
             if not username: return False, "Tài khoản không được để trống"
 
-            # Kiểm tra username không được chứa dấu cách hoặc ký tự đặc biệt
+
             if not re.match(r'^[a-zA-Z0-9_]+$', username):
                 return False, "Tài khoản chỉ được chứa chữ, số và dấu gạch dưới!"
 

@@ -8,8 +8,7 @@ class AuthDAO:
     def login(self, username, password):
         session = db.get_session()
         try:
-            # SỬA LỖI TẠI ĐÂY: Thêm .options(joinedload(User.role))
-            # Để lấy luôn thông tin Role cùng với User trước khi đóng session
+
             user = session.query(User).options(joinedload(User.role)).filter_by(username=username).first()
 
             if user and user.password == password:
@@ -24,7 +23,7 @@ class AuthDAO:
     def get_user_by_id(self, user_id):
         session = db.get_session()
         try:
-            # Cũng nên thêm joinedload ở đây nếu sau này cần dùng role
+
             return session.query(User).options(joinedload(User.role)).get(user_id)
         except Exception:
             return None

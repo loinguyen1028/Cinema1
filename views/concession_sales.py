@@ -17,7 +17,6 @@ class ConcessionSales:
         self.controller = ProductController()
         self.cust_controller = CustomerController()
 
-        # ===== MOVIE MANAGER THEME =====
         self.colors = {
             "bg": "#0f172a",
             "panel": "#111827",
@@ -44,12 +43,10 @@ class ConcessionSales:
 
         self.render()
 
-    # ================= RENDER =================
     def render(self):
         main_container = tk.Frame(self.parent, bg=self.colors["bg"])
         main_container.pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
 
-        # ===== LEFT: CATEGORY =====
         cat_panel = tk.Frame(main_container, bg=self.colors["panel"], width=200)
         cat_panel.pack(side=tk.LEFT, fill=tk.Y)
         cat_panel.pack_propagate(False)
@@ -81,7 +78,6 @@ class ConcessionSales:
             self.cat_buttons[cat] = btn
         self.highlight_category()
 
-        # ===== CENTER: PRODUCTS =====
         center_panel = tk.Frame(main_container, bg=self.colors["bg"])
         center_panel.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=10)
 
@@ -99,7 +95,6 @@ class ConcessionSales:
 
         self.render_products()
 
-        # ===== RIGHT: CART =====
         cart_panel = tk.Frame(main_container, bg=self.colors["panel"], width=360)
         cart_panel.pack(side=tk.RIGHT, fill=tk.Y)
         cart_panel.pack_propagate(False)
@@ -112,7 +107,6 @@ class ConcessionSales:
             font=("Arial", 16, "bold")
         ).pack(pady=(20, 10))
 
-        # ---- CUSTOMER ----
         cust_frame = tk.LabelFrame(
             cart_panel,
             text=" Khách hàng & Ưu đãi ",
@@ -159,11 +153,9 @@ class ConcessionSales:
         )
         self.lbl_cust_info.pack(anchor="w", padx=5, pady=(0, 5))
 
-        # ---- CART LIST ----
         self.cart_list_frame = tk.Frame(cart_panel, bg=self.colors["panel"])
         self.cart_list_frame.pack(fill=tk.BOTH, expand=True, padx=12)
 
-        # ---- FOOTER ----
         footer = tk.Frame(cart_panel, bg=self.colors["panel"], padx=15, pady=20)
         footer.pack(side=tk.BOTTOM, fill=tk.X)
 
@@ -197,7 +189,6 @@ class ConcessionSales:
 
         self.update_cart_ui()
 
-    # ================= PRODUCTS =================
     def switch_category(self, category):
         self.current_category = category
         self.highlight_category()
@@ -253,7 +244,6 @@ class ConcessionSales:
             command=lambda: self.add_to_cart(product)
         ).pack(pady=6, ipadx=15)
 
-    # ================= CART =================
     def add_to_cart(self, product):
         pid = product.product_id
         self.cart.setdefault(pid, {"obj": product, "qty": 0})
@@ -302,7 +292,6 @@ class ConcessionSales:
         self.lbl_discount.config(text=f"Giảm giá: -{int(discount_amt):,} đ" if discount_amt > 0 else "")
         self.lbl_total.config(text=f"{int(self.final_total):,} VND")
 
-    # ================= CUSTOMER =================
     def on_cust_type_change(self, event):
         self.current_customer = None
         self.discount_percent = 0.0
@@ -344,7 +333,6 @@ class ConcessionSales:
 
         self.update_cart_ui()
 
-    # ================= PAYMENT =================
     def on_payment_click(self):
         if not self.cart:
             messagebox.showwarning("Trống", "Vui lòng chọn sản phẩm!")

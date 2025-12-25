@@ -11,7 +11,6 @@ class StaffDialog(tk.Toplevel):
         self.staff_id = staff_id
         self.on_success = on_success
 
-        # ===== THEME =====
         self.colors = {
             "bg": "#0f172a",
             "card": "#1f2933",
@@ -28,7 +27,6 @@ class StaffDialog(tk.Toplevel):
         self.resizable(True, True)
         self.grab_set()
 
-        # Roles
         self.roles_list = self.controller.get_roles()
         self.role_map = {r.role_name: r.role_id for r in self.roles_list}
 
@@ -37,7 +35,6 @@ class StaffDialog(tk.Toplevel):
         if mode == "edit" and staff_id:
             self.load_data()
 
-    # ================= UI =================
     def render_ui(self):
         container = tk.Frame(
             self,
@@ -47,7 +44,6 @@ class StaffDialog(tk.Toplevel):
         )
         container.pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
 
-        # Title
         tk.Label(
             container,
             text=self.title(),
@@ -56,7 +52,6 @@ class StaffDialog(tk.Toplevel):
             fg=self.colors["primary"]
         ).pack(anchor="w", pady=(0, 20))
 
-        # ===== HELPERS =====
         def label(text):
             tk.Label(
                 container,
@@ -78,7 +73,6 @@ class StaffDialog(tk.Toplevel):
             e.pack(fill=tk.X, ipady=6, pady=(4, 14))
             return e
 
-        # ===== THÔNG TIN CÁ NHÂN =====
         label("Họ và tên")
         self.e_name = entry()
 
@@ -104,14 +98,12 @@ class StaffDialog(tk.Toplevel):
         label("Email")
         self.e_email = entry()
 
-        # ===== CÔNG VIỆC =====
         label("Ngày bắt đầu làm việc")
         f_start = tk.Frame(container, bg=self.colors["card"])
         f_start.pack(fill=tk.X, pady=(4, 14))
         self.e_start_date = entry(f_start)
         self.create_calendar_btn(f_start, self.e_start_date)
 
-        # ===== TÀI KHOẢN =====
         acc_frame = tk.LabelFrame(
             container,
             text="Thông tin đăng nhập",
@@ -123,7 +115,13 @@ class StaffDialog(tk.Toplevel):
         )
         acc_frame.pack(fill=tk.X, pady=10)
 
-        tk.Label(acc_frame, text="Tên tài khoản", bg=self.colors["card"], fg=self.colors["muted"]).pack(anchor="w")
+        tk.Label(
+            acc_frame,
+            text="Tên tài khoản",
+            bg=self.colors["card"],
+            fg=self.colors["muted"]
+        ).pack(anchor="w")
+
         self.e_username = tk.Entry(
             acc_frame,
             font=("Arial", 11),
@@ -134,7 +132,13 @@ class StaffDialog(tk.Toplevel):
         )
         self.e_username.pack(fill=tk.X, ipady=6, pady=(4, 14))
 
-        tk.Label(acc_frame, text="Quyền hạn (Role)", bg=self.colors["card"], fg=self.colors["muted"]).pack(anchor="w")
+        tk.Label(
+            acc_frame,
+            text="Quyền hạn (Role)",
+            bg=self.colors["card"],
+            fg=self.colors["muted"]
+        ).pack(anchor="w")
+
         self.cbo_role = ttk.Combobox(
             acc_frame,
             values=list(self.role_map.keys()),
@@ -145,7 +149,6 @@ class StaffDialog(tk.Toplevel):
             self.cbo_role.current(0)
         self.cbo_role.pack(fill=tk.X, ipady=4)
 
-        # ===== BUTTON =====
         btn_frame = tk.Frame(container, bg=self.colors["card"])
         btn_frame.pack(fill=tk.X, pady=(20, 0))
 
@@ -175,13 +178,15 @@ class StaffDialog(tk.Toplevel):
             command=self.destroy
         ).pack(side=tk.RIGHT)
 
-    # ================= HELPERS =================
     def create_calendar_btn(self, parent, entry_widget):
         def open_cal(e):
             DatePickerPopup(
                 self,
                 entry_widget.get(),
-                lambda d: (entry_widget.delete(0, tk.END), entry_widget.insert(0, d)),
+                lambda d: (
+                    entry_widget.delete(0, tk.END),
+                    entry_widget.insert(0, d)
+                ),
                 trigger_widget=entry_widget
             )
 
@@ -196,7 +201,6 @@ class StaffDialog(tk.Toplevel):
 
         entry_widget.bind("<Button-1>", open_cal)
 
-    # ================= LOAD DATA =================
     def load_data(self):
         staff = self.controller.get_detail(self.staff_id)
         extra = staff.extra_info if staff.extra_info else {}
@@ -214,7 +218,6 @@ class StaffDialog(tk.Toplevel):
         self.e_username.insert(0, staff.username)
         self.e_username.config(state="readonly")
 
-    # ================= SAVE =================
     def save_action(self):
         role_name = self.cbo_role.get()
         role_id = self.role_map.get(role_name)

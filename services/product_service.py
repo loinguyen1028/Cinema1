@@ -12,7 +12,6 @@ class ProductService:
         return self.dao.get_all()
 
     def get_detail(self, p_id):
-        # DAO thường có hàm get_by_id, hãy chắc chắn ProductDAO có hàm này
         return self.dao.get_by_id(p_id)
 
     def save_product(self, mode, p_id, name, category, price, image_path):
@@ -31,7 +30,6 @@ class ProductService:
     def delete_product(self, p_id):
         return self.dao.delete(p_id)
 
-    # Xử lý bán hàng trực tiếp (Đồ ăn)
     def process_direct_sale(self, user_id, total_amount, products_list, customer_id=None):
         return self.ticket_dao.create_concession_transaction(user_id, total_amount, products_list, customer_id)
 

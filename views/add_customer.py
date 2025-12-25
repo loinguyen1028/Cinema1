@@ -9,7 +9,6 @@ class AddCustomer:
         self.parent = parent_frame
         self.controller = CustomerController()
 
-        # ===== MOVIE MANAGER THEME =====
         self.colors = {
             "bg": "#0f172a",
             "panel": "#111827",
@@ -21,22 +20,18 @@ class AddCustomer:
             "edit": "#2563eb"
         }
 
-        # ===== ACTION STATE =====
         self.action_buttons = []
         self.current_action_row = None
 
         self.render()
 
-    # =====================================================
     def render(self):
         for w in self.parent.winfo_children():
             w.destroy()
 
-        # ================= CONTAINER =================
         container = tk.Frame(self.parent, bg=self.colors["bg"])
         container.pack(fill=tk.BOTH, expand=True, padx=30, pady=25)
 
-        # ================= HEADER =================
         header = tk.Frame(container, bg=self.colors["bg"])
         header.pack(fill=tk.X, pady=(0, 18))
 
@@ -61,7 +56,6 @@ class AddCustomer:
             command=lambda: self.open_dialog("add")
         ).pack(side=tk.RIGHT)
 
-        # ================= TOOLBAR =================
         toolbar = tk.Frame(container, bg=self.colors["card"], padx=15, pady=12)
         toolbar.pack(fill=tk.X, pady=(0, 15))
 
@@ -77,11 +71,9 @@ class AddCustomer:
         self.entry_search.pack(side=tk.LEFT, padx=10, ipady=6)
         self.entry_search.bind("<KeyRelease>", self.on_search)
 
-        # ================= CARD =================
         card = tk.Frame(container, bg=self.colors["card"])
         card.pack(fill=tk.BOTH, expand=True)
 
-        # ================= TABLE STYLE =================
         style = ttk.Style()
         style.theme_use("default")
 
@@ -109,7 +101,6 @@ class AddCustomer:
             foreground=[("selected", "#ffffff")]
         )
 
-        # ================= TABLE =================
         columns = (
             "id", "name", "phone", "email",
             "dob", "points", "level", "created", "actions"
@@ -137,7 +128,6 @@ class AddCustomer:
         self.tree.column("actions", anchor="center", stretch=False)
         self.tree.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
 
-        # ===== EVENTS =====
         self.tree.bind("<<TreeviewSelect>>", self.show_action_buttons)
         self.tree.bind("<Configure>", lambda e: self.hide_action_buttons())
         self.tree.bind("<MouseWheel>", lambda e: self.hide_action_buttons())
@@ -146,8 +136,6 @@ class AddCustomer:
         self.create_action_buttons()
         self.load_data()
 
-    # =====================================================
-    # ================= DATA =================
     def load_data(self):
         self.hide_action_buttons()
         customers = self.controller.get_all()
@@ -180,8 +168,6 @@ class AddCustomer:
                 )
             )
 
-    # =====================================================
-    # ===== ACTION BUTTON SYSTEM (CHUẨN ROOM MANAGER) =====
     def create_action_buttons(self):
         base = {
             "font": ("Arial", 11),
@@ -226,8 +212,6 @@ class AddCustomer:
         for btn in self.action_buttons:
             btn.place_forget()
 
-    # =====================================================
-    # ================= ACTION =================
     def open_dialog(self, mode, customer_id=None):
         CustomerDialog(
             self.parent,

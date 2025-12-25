@@ -3,14 +3,16 @@ from models import Room, Seat, Showtime
 from sqlalchemy.exc import IntegrityError
 import string
 from sqlalchemy.orm import joinedload
+
+
 class RoomDAO:
 
     def get_all_rooms(self):
         session = db.get_session()
         try:
-            return session.query(Room)\
-                .filter(Room.is_active == True)\
-                .order_by(Room.room_id)\
+            return session.query(Room) \
+                .filter(Room.is_active == True) \
+                .order_by(Room.room_id) \
                 .all()
         finally:
             session.close()
@@ -30,9 +32,8 @@ class RoomDAO:
         try:
             room = Room(room_name=room_name, capacity=capacity)
             session.add(room)
-            session.flush()  # lấy room_id
+            session.flush()
 
-            # Tạo ghế
             seat_rows = string.ascii_uppercase[:rows]
             for row in seat_rows:
                 for num in range(1, seats_per_row + 1):
@@ -61,23 +62,19 @@ class RoomDAO:
             if not room:
                 return False, "Không tìm thấy phòng"
 
-            # ❌ Không cho sửa nếu đã có suất chiếu
             has_showtime = session.query(Showtime) \
                 .filter(Showtime.room_id == room_id) \
                 .first()
             if has_showtime:
                 return False, "Không thể sửa cấu trúc phòng đã có suất chiếu"
 
-            # Update phòng
             room.room_name = room_name
             room.capacity = capacity
 
-            # ❗ Xóa ghế cũ
             session.query(Seat) \
                 .filter(Seat.room_id == room_id) \
                 .delete()
 
-            # Tạo ghế mới
             seat_rows = string.ascii_uppercase[:rows]
             for row in seat_rows:
                 for num in range(1, seats_per_row + 1):
@@ -106,11 +103,9 @@ class RoomDAO:
             if not room:
                 return False, "Không tìm thấy phòng"
 
-            # Không cho sửa nếu đã có suất chiếu
-            has_showtime = session.query(Showtime)\
-                .filter(Showtime.room_id == room_id)\
+            has_showtime = session.query(Showtime) \
+                .filter(Showtime.room_id == room_id) \
                 .first()
-
             if has_showtime:
                 return False, "Không thể sửa phòng đã có suất chiếu"
 

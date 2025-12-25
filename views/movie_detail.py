@@ -4,8 +4,6 @@ from PIL import Image, ImageTk
 import os
 
 
-
-
 class theme:
     PRIMARY = "#5c6bc0"
     PRIMARY_DARK = "#3949ab"
@@ -28,7 +26,6 @@ class MovieDetail(tk.Toplevel):
         self.config(bg=theme.BG_MAIN)
         self.grab_set()
 
-        # Load dữ liệu
         self.movie = self.controller.get_detail(self.movie_id)
         if not self.movie:
             self.destroy()
@@ -37,7 +34,6 @@ class MovieDetail(tk.Toplevel):
         self.render_ui()
 
     def render_ui(self):
-        # ================= HEADER =================
         header_frame = tk.Frame(self, bg=theme.BG_CARD, pady=20)
         header_frame.pack(fill=tk.X, padx=30, pady=(30, 10))
 
@@ -56,7 +52,6 @@ class MovieDetail(tk.Toplevel):
             width=120
         ).pack(anchor="w", pady=(6, 0))
 
-        # ================= BODY =================
         body_frame = tk.Frame(
             self,
             bg=theme.BG_CARD,
@@ -67,7 +62,6 @@ class MovieDetail(tk.Toplevel):
         )
         body_frame.pack(fill=tk.BOTH, expand=True, padx=30)
 
-        # -------- LEFT: POSTER --------
         left_col = tk.Frame(body_frame, bg=theme.BG_CARD, width=240)
         left_col.pack(side=tk.LEFT, fill=tk.Y, padx=(0, 30), anchor="n")
 
@@ -93,7 +87,6 @@ class MovieDetail(tk.Toplevel):
             except:
                 pass
 
-        # -------- RIGHT: INFO --------
         right_col = tk.Frame(body_frame, bg=theme.BG_CARD)
         right_col.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
@@ -141,7 +134,6 @@ class MovieDetail(tk.Toplevel):
         add_info_row("Ngôn ngữ:", extra.get("language", "N/A"))
         add_info_row("Diễn viên:", extra.get("actors", "N/A"), multiline=True)
 
-        # ================= FOOTER =================
         footer = tk.Frame(self, bg=theme.BG_MAIN)
         footer.pack(fill=tk.BOTH, expand=False, padx=30, pady=(10, 30))
 
@@ -176,7 +168,6 @@ class MovieDetail(tk.Toplevel):
 
         scrollbar.config(command=txt_desc.yview)
 
-        # -------- BUTTON --------
         btn_frame = tk.Frame(footer, bg=theme.BG_MAIN)
         btn_frame.pack(fill=tk.X, pady=(15, 0))
 

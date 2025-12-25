@@ -14,7 +14,6 @@ class CustomerManager:
 
         self.render()
 
-    # =====================================================
     def render(self):
         self.colors = {
             "bg": "#0f172a",
@@ -31,7 +30,6 @@ class CustomerManager:
         container = tk.Frame(self.parent, bg=self.colors["bg"])
         container.pack(fill=tk.BOTH, expand=True, padx=30, pady=25)
 
-        # ===== HEADER =====
         header = tk.Frame(container, bg=self.colors["bg"])
         header.pack(fill=tk.X, pady=(0, 18))
 
@@ -56,7 +54,6 @@ class CustomerManager:
             command=lambda: self.open_dialog("add")
         ).pack(side=tk.RIGHT)
 
-        # ===== SEARCH =====
         toolbar = tk.Frame(container, bg=self.colors["bg"])
         toolbar.pack(fill=tk.X, pady=(0, 12))
 
@@ -102,7 +99,6 @@ class CustomerManager:
             font=("Arial", 12)
         ).pack(side=tk.LEFT, padx=(0, 8))
 
-        # ===== TABLE =====
         card = tk.Frame(container, bg=self.colors["card"])
         card.pack(fill=tk.BOTH, expand=True)
 
@@ -155,7 +151,6 @@ class CustomerManager:
 
         self.tree.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
 
-        # EVENTS
         self.tree.bind("<<TreeviewSelect>>", self.show_action_buttons)
         self.tree.bind("<Configure>", lambda e: self.hide_action_buttons())
         self.tree.bind("<MouseWheel>", lambda e: self.hide_action_buttons())
@@ -164,7 +159,6 @@ class CustomerManager:
         self.create_action_buttons()
         self.load_data()
 
-    # =====================================================
     def load_data(self):
         self.hide_action_buttons()
         self.tree.delete(*self.tree.get_children())
@@ -193,8 +187,6 @@ class CustomerManager:
                 )
             )
 
-    # =====================================================
-    # ===== ACTION BUTTON SYSTEM =====
     def create_action_buttons(self):
         base = {
             "font": ("Arial", 11),
@@ -249,8 +241,6 @@ class CustomerManager:
         for btn in self.action_buttons:
             btn.place_forget()
 
-    # =====================================================
-    # ===== ACTION HANDLERS =====
     def on_edit(self):
         if self.current_action_row:
             self.open_dialog("edit", self.current_action_row)
@@ -268,7 +258,6 @@ class CustomerManager:
             else:
                 messagebox.showerror("Lỗi", msg)
 
-    # =====================================================
     def open_dialog(self, mode, customer_id=None):
         CustomerDialog(
             self.parent,

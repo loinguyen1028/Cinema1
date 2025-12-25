@@ -20,15 +20,15 @@ class Customer(Base):
     email = Column(String(100))
     created_at = Column(DateTime, default=datetime.now)
 
-    # --- CÁC CỘT MỚI ---
+
     points = Column(Integer, default=0)
     tier_id = Column(Integer, ForeignKey('membership_tiers.id'))
 
-    # Giữ lại extra_info cho dob (ngày sinh), nhưng không lưu points/level nữa
+
     extra_info = Column(JSONB)
     is_active = Column(Boolean, default=True)
 
-    # Relationship để lấy thông tin hạng
+
     tier = relationship("MembershipTier")
     tickets = relationship("Ticket", back_populates="customer")
 
@@ -48,10 +48,10 @@ class Ticket(Base):
     user = relationship("User", back_populates="sales")
     status = Column(String(20), default='booked')
 
-    # Quan hệ với ghế (1 vé có nhiều ghế)
+
     ticket_seats = relationship("TicketSeat", back_populates="ticket", cascade="all, delete-orphan")
 
-    # --- ĐÚNG: Quan hệ với sản phẩm nằm ở đây ---
+
     ticket_products = relationship("TicketProduct", back_populates="ticket", cascade="all, delete-orphan")
 
 
@@ -65,7 +65,6 @@ class TicketSeat(Base):
     ticket = relationship("Ticket", back_populates="ticket_seats")
     seat = relationship("Seat")
 
-    # LƯU Ý: KHÔNG ĐƯỢC CÓ 'ticket_products' Ở ĐÂY
 
     __table_args__ = (UniqueConstraint('ticket_id', 'seat_id', name='uix_ticket_seat'),)
 

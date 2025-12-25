@@ -8,11 +8,11 @@ class TicketManager:
         self.parent = parent_frame
         self.controller = TicketController()
 
-        # ===== STATE =====
+
         self.action_buttons = []
         self.current_action_row = None
 
-        # ===== THEME =====
+
         self.colors = {
             "bg": "#0f172a",
             "panel": "#111827",
@@ -26,7 +26,6 @@ class TicketManager:
 
         self.render()
 
-    # =====================================================
     def render(self):
         for w in self.parent.winfo_children():
             w.destroy()
@@ -34,7 +33,6 @@ class TicketManager:
         container = tk.Frame(self.parent, bg=self.colors["bg"])
         container.pack(fill=tk.BOTH, expand=True, padx=30, pady=25)
 
-        # ================= HEADER =================
         header = tk.Frame(container, bg=self.colors["bg"])
         header.pack(fill=tk.X, pady=(0, 18))
 
@@ -48,7 +46,7 @@ class TicketManager:
 
         tk.Button(
             header,
-            text="🔄 Tải lại",
+            text="Tải lại",
             bg=self.colors["primary"],
             fg="#000",
             font=("Arial", 11, "bold"),
@@ -59,7 +57,6 @@ class TicketManager:
             command=self.load_data
         ).pack(side=tk.RIGHT)
 
-        # ================= TOOLBAR =================
         toolbar = tk.Frame(container, bg=self.colors["card"], padx=15, pady=12)
         toolbar.pack(fill=tk.X, pady=(0, 15))
 
@@ -75,11 +72,10 @@ class TicketManager:
         self.entry_search.pack(side=tk.LEFT, padx=10, ipady=6)
         self.entry_search.bind("<KeyRelease>", self.on_search)
 
-        # ================= CARD =================
         card = tk.Frame(container, bg=self.colors["card"])
         card.pack(fill=tk.BOTH, expand=True)
 
-        # ================= TABLE STYLE =================
+
         style = ttk.Style()
         style.theme_use("default")
 
@@ -107,7 +103,6 @@ class TicketManager:
             foreground=[("selected", "#ffffff")]
         )
 
-        # ================= TABLE =================
         columns = (
             "id", "movie", "room", "seats",
             "customer", "date", "total", "actions"
@@ -138,8 +133,6 @@ class TicketManager:
         self.create_action_buttons()
         self.load_data()
 
-    # =====================================================
-    # ================= DATA =================
     def load_data(self):
         self.hide_action_buttons()
         self.tree.delete(*self.tree.get_children())
@@ -175,8 +168,6 @@ class TicketManager:
         for t in tickets:
             self.tree.insert("", tk.END, iid=t.ticket_id, values=(t.ticket_id, "..."))
 
-    # =====================================================
-    # ================= ACTION BUTTON SYSTEM =================
     def create_action_buttons(self):
         base = {
             "font": ("Arial", 11),
@@ -220,8 +211,7 @@ class TicketManager:
         for btn in self.action_buttons:
             btn.place_forget()
 
-    # =====================================================
-    # ================= ACTION =================
+
     def on_delete(self):
         if not self.current_action_row:
             return
