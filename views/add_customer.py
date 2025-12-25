@@ -151,6 +151,8 @@ class AddCustomer:
 
         for cus in customers:
             extra = cus.extra_info or {}
+
+            level = cus.tier.tier_name if cus.tier else "Chưa xếp hạng"
             self.tree.insert(
                 "",
                 tk.END,
@@ -161,8 +163,8 @@ class AddCustomer:
                     cus.phone,
                     cus.email,
                     extra.get("dob", ""),
-                    extra.get("points", 0),
-                    extra.get("level", "Thân thiết"),
+                    cus.points,
+                    level,
                     cus.created_at.strftime("%d/%m/%Y") if cus.created_at else "",
                     ""
                 )
