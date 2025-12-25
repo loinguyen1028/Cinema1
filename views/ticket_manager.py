@@ -7,178 +7,232 @@ class TicketManager:
     def __init__(self, parent_frame):
         self.parent = parent_frame
         self.controller = TicketController()
+
+        # ===== STATE =====
+        self.action_buttons = []
+        self.current_action_row = None
+
+        # ===== THEME =====
+        self.colors = {
+            "bg": "#0f172a",
+            "panel": "#111827",
+            "card": "#1f2933",
+            "primary": "#facc15",
+            "text": "#e5e7eb",
+            "muted": "#9ca3af",
+            "danger": "#ef4444",
+            "selected": "#334155"
+        }
+
         self.render()
 
+    # =====================================================
     def render(self):
-        # ================= ROOT CONTENT =================
-        content = tk.Frame(self.parent, bg="#121212")
-        content.pack(fill=tk.BOTH, expand=True, padx=25, pady=20)
+        for w in self.parent.winfo_children():
+            w.destroy()
+
+        container = tk.Frame(self.parent, bg=self.colors["bg"])
+        container.pack(fill=tk.BOTH, expand=True, padx=30, pady=25)
 
         # ================= HEADER =================
-        header = tk.Frame(content, bg="#121212")
-        header.pack(fill=tk.X, pady=(0, 15))
+        header = tk.Frame(container, bg=self.colors["bg"])
+        header.pack(fill=tk.X, pady=(0, 18))
 
         tk.Label(
             header,
             text="🎟 QUẢN LÝ VÉ ĐÃ ĐẶT",
             font=("Arial", 18, "bold"),
-            fg="#f5c518",
-            bg="#121212"
+            fg=self.colors["primary"],
+            bg=self.colors["bg"]
         ).pack(side=tk.LEFT)
 
-        # ================= TOOLBAR =================
-        toolbar = tk.Frame(content, bg="#1a1a1a", padx=15, pady=10)
-        toolbar.pack(fill=tk.X, pady=(0, 15))
-
-        # --- Search ---
-        search_frame = tk.Frame(toolbar, bg="#1a1a1a")
-        search_frame.pack(side=tk.LEFT)
-
-        self.entry_search = tk.Entry(
-            search_frame,
-            width=40,
-            font=("Arial", 11),
-            relief="flat"
-        )
-        self.entry_search.pack(side=tk.LEFT, ipady=6)
-        self.entry_search.bind("<KeyRelease>", self.on_search)
-
-        tk.Label(
-            search_frame,
-            text="🔍 Tìm theo Mã vé / SĐT",
-            font=("Arial", 10),
-            bg="#1a1a1a",
-            fg="#aaaaaa"
-        ).pack(side=tk.LEFT, padx=8)
-
-        # --- Reload ---
         tk.Button(
-            toolbar,
+            header,
             text="🔄 Tải lại",
-            bg="#f5c518",
-            fg="black",
-            font=("Arial", 10, "bold"),
+            bg=self.colors["primary"],
+            fg="#000",
+            font=("Arial", 11, "bold"),
+            padx=16,
+            pady=6,
             relief="flat",
-            padx=15,
             cursor="hand2",
             command=self.load_data
         ).pack(side=tk.RIGHT)
 
-        # ================= TABLE =================
-        table_frame = tk.Frame(content, bg="#1a1a1a")
-        table_frame.pack(fill=tk.BOTH, expand=True)
+        # ================= TOOLBAR =================
+        toolbar = tk.Frame(container, bg=self.colors["card"], padx=15, pady=12)
+        toolbar.pack(fill=tk.X, pady=(0, 15))
 
+        tk.Label(
+            toolbar,
+            text="🔍 Tìm mã vé / SĐT:",
+            font=("Arial", 11),
+            bg=self.colors["card"],
+            fg=self.colors["muted"]
+        ).pack(side=tk.LEFT)
+
+        self.entry_search = tk.Entry(toolbar, width=36, font=("Arial", 11), relief="flat")
+        self.entry_search.pack(side=tk.LEFT, padx=10, ipady=6)
+        self.entry_search.bind("<KeyRelease>", self.on_search)
+
+        # ================= CARD =================
+        card = tk.Frame(container, bg=self.colors["card"])
+        card.pack(fill=tk.BOTH, expand=True)
+
+        # ================= TABLE STYLE =================
         style = ttk.Style()
         style.theme_use("default")
 
         style.configure(
             "Treeview",
-            background="#1a1a1a",
-            foreground="white",
-            rowheight=38,
-            fieldbackground="#1a1a1a",
-            borderwidth=0,
-            font=("Arial", 11)
+            background=self.colors["panel"],
+            fieldbackground=self.colors["panel"],
+            foreground=self.colors["text"],
+            rowheight=44,
+            font=("Arial", 11),
+            borderwidth=0
         )
 
         style.configure(
             "Treeview.Heading",
-            background="#202020",
-            foreground="#f5c518",
+            background=self.colors["card"],
+            foreground=self.colors["primary"],
             font=("Arial", 11, "bold"),
             relief="flat"
         )
 
         style.map(
             "Treeview",
-            background=[("selected", "#f5c518")],
-            foreground=[("selected", "black")]
+            background=[("selected", self.colors["selected"])],
+            foreground=[("selected", "#ffffff")]
         )
 
-        columns = ("id", "movie", "room", "seats", "customer", "date", "total", "actions")
-        self.tree = ttk.Treeview(
-            table_frame,
-            columns=columns,
-            show="headings",
-            selectmode="browse"
+        # ================= TABLE =================
+        columns = (
+            "id", "movie", "room", "seats",
+            "customer", "date", "total", "actions"
         )
+
+        self.tree = ttk.Treeview(card, columns=columns, show="headings", selectmode="browse")
 
         headers = [
             "Mã vé", "Phim", "Phòng", "Ghế",
             "Khách hàng", "Ngày đặt", "Tổng tiền", "Thao tác"
         ]
-        widths = [70, 220, 90, 180, 180, 140, 120, 110]
+        widths = [80, 220, 90, 220, 220, 140, 130, 120]
 
         for col, h, w in zip(columns, headers, widths):
-            self.tree.heading(col, text=h, anchor="center")
-            self.tree.column(col, width=w, anchor="center")
+            anchor = "center" if col in ("id", "room", "date", "total", "actions") else "w"
+            self.tree.heading(col, text=h, anchor=anchor)
+            self.tree.column(col, width=w, anchor=anchor, stretch=(col != "actions"))
 
-        self.tree.pack(fill=tk.BOTH, expand=True)
-        self.tree.bind("<ButtonRelease-1>", self.on_click)
+        self.tree.column("actions", stretch=False)
+        self.tree.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
 
+        # ================= EVENTS =================
+        self.tree.bind("<<TreeviewSelect>>", self.show_action_buttons)
+        self.tree.bind("<Button-1>", lambda e: self.hide_action_buttons())
+        self.tree.bind("<MouseWheel>", lambda e: self.hide_action_buttons())
+        self.tree.bind("<Configure>", lambda e: self.hide_action_buttons())
+
+        self.create_action_buttons()
         self.load_data()
 
+    # =====================================================
     # ================= DATA =================
     def load_data(self):
-        tickets = self.controller.get_all_tickets()
-        self.update_table(tickets)
+        self.hide_action_buttons()
+        self.tree.delete(*self.tree.get_children())
 
-    def on_search(self, event):
+        tickets = self.controller.get_all_tickets()
+
+        for t in tickets:
+            movie = t.showtime.movie.title if t.showtime and t.showtime.movie else "N/A"
+            room = t.showtime.room.room_name if t.showtime and t.showtime.room else "N/A"
+            seats = ", ".join(f"{s.seat.seat_row}{s.seat.seat_number}" for s in t.ticket_seats)
+            customer = (
+                f"{t.customer.name} ({t.customer.phone})"
+                if t.customer else "Khách vãng lai"
+            )
+            date = t.booking_time.strftime("%d/%m %H:%M")
+            total = f"{int(t.total_amount):,} đ"
+
+            self.tree.insert(
+                "",
+                tk.END,
+                iid=t.ticket_id,
+                values=(t.ticket_id, movie, room, seats, customer, date, total, "")
+            )
+
+    def on_search(self, event=None):
         keyword = self.entry_search.get().strip()
         tickets = self.controller.search_tickets(keyword)
+        self.load_data()
         self.update_table(tickets)
 
     def update_table(self, tickets):
-        for item in self.tree.get_children():
-            self.tree.delete(item)
-
+        self.tree.delete(*self.tree.get_children())
         for t in tickets:
-            movie_name = t.showtime.movie.title if t.showtime and t.showtime.movie else "N/A"
-            room_name = t.showtime.room.room_name if t.showtime and t.showtime.room else "N/A"
+            self.tree.insert("", tk.END, iid=t.ticket_id, values=(t.ticket_id, "..."))
 
-            seat_list = [f"{ts.seat.seat_row}{ts.seat.seat_number}" for ts in t.ticket_seats]
-            seat_str = ", ".join(seat_list)
+    # =====================================================
+    # ================= ACTION BUTTON SYSTEM =================
+    def create_action_buttons(self):
+        base = {
+            "font": ("Arial", 11),
+            "bd": 0,
+            "relief": "flat",
+            "cursor": "hand2"
+        }
 
-            cus_info = (
-                f"{t.customer.name}\n({t.customer.phone})"
-                if t.customer else "Khách vãng lai"
-            )
+        self.btn_delete = tk.Button(
+            self.tree,
+            text="🗑",
+            bg=self.colors["danger"],
+            fg="white",
+            command=self.on_delete,
+            **base
+        )
 
-            date_str = t.booking_time.strftime("%d/%m %H:%M")
-            total_str = f"{int(t.total_amount):,} đ"
+        self.action_buttons = [self.btn_delete]
 
-            vals = (
-                t.ticket_id,
-                movie_name,
-                room_name,
-                seat_str,
-                cus_info,
-                date_str,
-                total_str,
-                "❌ Hủy vé"
-            )
-
-            self.tree.insert("", tk.END, iid=t.ticket_id, values=vals)
-
-    # ================= ACTION =================
-    def on_click(self, event):
-        region = self.tree.identify("region", event.x, event.y)
-        if region != "cell":
+    def show_action_buttons(self, event=None):
+        selected = self.tree.selection()
+        if not selected:
             return
 
-        col = self.tree.identify_column(event.x)
-        if col == "#8":
-            item_id = self.tree.identify_row(event.y)
-            if not item_id:
-                return
+        item_id = selected[0]
+        self.current_action_row = item_id
 
-            if messagebox.askyesno(
-                "Xác nhận",
-                f"Bạn chắc chắn muốn HỦY vé #{item_id}?"
-            ):
-                success, msg = self.controller.cancel_ticket(item_id)
-                if success:
-                    messagebox.showinfo("Thành công", msg)
-                    self.load_data()
-                else:
-                    messagebox.showerror("Lỗi", msg)
+        bbox = self.tree.bbox(item_id, "#8")
+        if not bbox:
+            return
+
+        x, y, width, height = bbox
+        self.btn_delete.place(
+            x=x + 6,
+            y=y + 6,
+            width=width - 12,
+            height=height - 12
+        )
+
+    def hide_action_buttons(self):
+        for btn in self.action_buttons:
+            btn.place_forget()
+
+    # =====================================================
+    # ================= ACTION =================
+    def on_delete(self):
+        if not self.current_action_row:
+            return
+
+        if messagebox.askyesno(
+            "Xác nhận",
+            f"Bạn chắc chắn muốn HỦY vé #{self.current_action_row}?"
+        ):
+            success, msg = self.controller.cancel_ticket(self.current_action_row)
+            if success:
+                messagebox.showinfo("Thành công", msg)
+                self.load_data()
+            else:
+                messagebox.showerror("Lỗi", msg)

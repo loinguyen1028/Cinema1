@@ -17,17 +17,18 @@ class ConcessionSales:
         self.controller = ProductController()
         self.cust_controller = CustomerController()
 
-        # THEME CINEMA (UI ONLY)
+        # ===== MOVIE MANAGER THEME =====
         self.colors = {
-            "bg_main": "#121212",
-            "bg_panel": "#1c1c1c",
-            "bg_card": "#222222",
-            "text_main": "#ffffff",
-            "text_muted": "#aaaaaa",
-            "accent": "#f5c518",
-            "danger": "#e53935",
-            "success": "#4caf50",
-            "border": "#333333"
+            "bg": "#0f172a",
+            "panel": "#111827",
+            "card": "#1f2933",
+            "primary": "#facc15",
+            "text": "#e5e7eb",
+            "muted": "#9ca3af",
+            "btn": "#2563eb",
+            "danger": "#dc2626",
+            "success": "#16a34a",
+            "selected": "#334155"
         }
 
         self.cart = {}
@@ -45,31 +46,35 @@ class ConcessionSales:
 
     # ================= RENDER =================
     def render(self):
-        main_container = tk.Frame(self.parent, bg=self.colors["bg_main"])
-        main_container.pack(fill=tk.BOTH, expand=True)
+        main_container = tk.Frame(self.parent, bg=self.colors["bg"])
+        main_container.pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
 
         # ===== LEFT: CATEGORY =====
-        cat_panel = tk.Frame(main_container, bg=self.colors["bg_panel"], width=200)
+        cat_panel = tk.Frame(main_container, bg=self.colors["panel"], width=200)
         cat_panel.pack(side=tk.LEFT, fill=tk.Y)
         cat_panel.pack_propagate(False)
 
         tk.Label(
-            cat_panel, text="DANH MỤC",
-            bg=self.colors["bg_panel"],
-            fg=self.colors["accent"],
+            cat_panel,
+            text="DANH MỤC",
+            bg=self.colors["panel"],
+            fg=self.colors["primary"],
             font=("Arial", 11, "bold")
         ).pack(pady=20)
 
         self.cat_buttons = {}
         for cat in self.categories:
             btn = tk.Button(
-                cat_panel, text=cat,
-                bg=self.colors["bg_panel"],
-                fg=self.colors["text_main"],
+                cat_panel,
+                text=cat,
+                bg=self.colors["panel"],
+                fg=self.colors["text"],
                 font=("Arial", 10),
                 relief="flat",
                 anchor="w",
-                padx=20, pady=10,
+                padx=20,
+                pady=10,
+                cursor="hand2",
                 command=lambda c=cat: self.switch_category(c)
             )
             btn.pack(fill=tk.X)
@@ -77,12 +82,12 @@ class ConcessionSales:
         self.highlight_category()
 
         # ===== CENTER: PRODUCTS =====
-        center_panel = tk.Frame(main_container, bg=self.colors["bg_main"])
-        center_panel.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=10, pady=10)
+        center_panel = tk.Frame(main_container, bg=self.colors["bg"])
+        center_panel.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=10)
 
-        self.canvas = tk.Canvas(center_panel, bg=self.colors["bg_main"], highlightthickness=0)
+        self.canvas = tk.Canvas(center_panel, bg=self.colors["bg"], highlightthickness=0)
         scrollbar = ttk.Scrollbar(center_panel, orient="vertical", command=self.canvas.yview)
-        self.grid_frame = tk.Frame(self.canvas, bg=self.colors["bg_main"])
+        self.grid_frame = tk.Frame(self.canvas, bg=self.colors["bg"])
 
         self.grid_frame.bind("<Configure>", lambda e: self.canvas.configure(scrollregion=self.canvas.bbox("all")))
         self.window_id = self.canvas.create_window((0, 0), window=self.grid_frame, anchor="nw")
@@ -95,25 +100,27 @@ class ConcessionSales:
         self.render_products()
 
         # ===== RIGHT: CART =====
-        cart_panel = tk.Frame(main_container, bg=self.colors["bg_panel"], width=360)
+        cart_panel = tk.Frame(main_container, bg=self.colors["panel"], width=360)
         cart_panel.pack(side=tk.RIGHT, fill=tk.Y)
         cart_panel.pack_propagate(False)
 
         tk.Label(
-            cart_panel, text="ĐƠN HÀNG",
-            bg=self.colors["bg_panel"],
-            fg=self.colors["accent"],
-            font=("Arial", 15, "bold")
+            cart_panel,
+            text="ĐƠN HÀNG",
+            bg=self.colors["panel"],
+            fg=self.colors["primary"],
+            font=("Arial", 16, "bold")
         ).pack(pady=(20, 10))
 
         # ---- CUSTOMER ----
         cust_frame = tk.LabelFrame(
-            cart_panel, text=" Khách hàng & Ưu đãi ",
-            bg=self.colors["bg_panel"],
-            fg=self.colors["accent"],
+            cart_panel,
+            text=" Khách hàng & Ưu đãi ",
+            bg=self.colors["panel"],
+            fg=self.colors["primary"],
             font=("Arial", 10, "bold")
         )
-        cust_frame.pack(fill=tk.X, padx=10, pady=5)
+        cust_frame.pack(fill=tk.X, padx=12, pady=6)
 
         self.cbo_cust_type = ttk.Combobox(
             cust_frame,
@@ -124,7 +131,7 @@ class ConcessionSales:
         self.cbo_cust_type.pack(fill=tk.X, padx=5, pady=5)
         self.cbo_cust_type.bind("<<ComboboxSelected>>", self.on_cust_type_change)
 
-        f_phone = tk.Frame(cust_frame, bg=self.colors["bg_panel"])
+        f_phone = tk.Frame(cust_frame, bg=self.colors["panel"])
         f_phone.pack(fill=tk.X, padx=5, pady=5)
 
         self.e_phone = tk.Entry(f_phone, font=("Arial", 11), state="disabled")
@@ -132,53 +139,59 @@ class ConcessionSales:
         self.e_phone.bind("<Return>", lambda e: self.check_member())
 
         self.btn_check = tk.Button(
-            f_phone, text="🔎", state="disabled",
-            bg=self.colors["border"], fg="white",
+            f_phone,
+            text="🔎",
+            state="disabled",
+            bg=self.colors["btn"],
+            fg="white",
+            relief="flat",
+            cursor="hand2",
             command=self.check_member
         )
         self.btn_check.pack(side=tk.RIGHT, padx=(5, 0))
 
         self.lbl_cust_info = tk.Label(
-            cust_frame, text="",
-            bg=self.colors["bg_panel"],
+            cust_frame,
+            text="",
+            bg=self.colors["panel"],
             fg=self.colors["success"],
             font=("Arial", 9, "italic")
         )
         self.lbl_cust_info.pack(anchor="w", padx=5, pady=(0, 5))
 
         # ---- CART LIST ----
-        list_container = tk.Frame(cart_panel, bg=self.colors["bg_panel"])
-        list_container.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
-
-        self.cart_list_frame = tk.Frame(list_container, bg=self.colors["bg_panel"])
-        self.cart_list_frame.pack(fill=tk.BOTH, expand=True)
+        self.cart_list_frame = tk.Frame(cart_panel, bg=self.colors["panel"])
+        self.cart_list_frame.pack(fill=tk.BOTH, expand=True, padx=12)
 
         # ---- FOOTER ----
-        footer = tk.Frame(cart_panel, bg=self.colors["bg_panel"], padx=15, pady=20)
+        footer = tk.Frame(cart_panel, bg=self.colors["panel"], padx=15, pady=20)
         footer.pack(side=tk.BOTTOM, fill=tk.X)
 
-        self.lbl_subtotal = tk.Label(footer, bg=self.colors["bg_panel"], fg=self.colors["text_main"])
+        self.lbl_subtotal = tk.Label(footer, bg=self.colors["panel"], fg=self.colors["text"])
         self.lbl_subtotal.pack(fill=tk.X)
 
-        self.lbl_discount = tk.Label(footer, bg=self.colors["bg_panel"], fg=self.colors["danger"])
+        self.lbl_discount = tk.Label(footer, bg=self.colors["panel"], fg=self.colors["danger"])
         self.lbl_discount.pack(fill=tk.X)
 
         self.lbl_total = tk.Label(
-            footer, text="0 VND",
-            bg=self.colors["bg_panel"],
-            fg=self.colors["accent"],
+            footer,
+            text="0 VND",
+            bg=self.colors["panel"],
+            fg=self.colors["primary"],
             font=("Arial", 18, "bold"),
             anchor="e"
         )
         self.lbl_total.pack(pady=(10, 10), fill=tk.X)
 
         tk.Button(
-            footer, text="💳 THANH TOÁN",
-            bg=self.colors["accent"],
+            footer,
+            text="💳 THANH TOÁN",
+            bg=self.colors["primary"],
             fg="#000",
             font=("Arial", 13, "bold"),
             height=2,
             relief="flat",
+            cursor="hand2",
             command=self.on_payment_click
         ).pack(fill=tk.X)
 
@@ -193,8 +206,8 @@ class ConcessionSales:
     def highlight_category(self):
         for cat, btn in self.cat_buttons.items():
             btn.config(
-                bg=self.colors["accent"] if cat == self.current_category else self.colors["bg_panel"],
-                fg="#000" if cat == self.current_category else self.colors["text_main"],
+                bg=self.colors["primary"] if cat == self.current_category else self.colors["panel"],
+                fg="#000" if cat == self.current_category else self.colors["text"],
                 font=("Arial", 10, "bold") if cat == self.current_category else ("Arial", 10)
             )
 
@@ -210,30 +223,33 @@ class ConcessionSales:
             self.create_card(p, idx // 3, idx % 3)
 
     def create_card(self, product, row, col):
-        card = tk.Frame(self.grid_frame, bg=self.colors["bg_card"], bd=1, relief="solid")
-        card.grid(row=row, column=col, padx=6, pady=6, sticky="nsew")
+        card = tk.Frame(self.grid_frame, bg=self.colors["card"])
+        card.grid(row=row, column=col, padx=8, pady=8, sticky="nsew")
 
         try:
             if product.image_path and os.path.exists(product.image_path):
                 img = Image.open(product.image_path).resize((120, 120))
                 photo = ImageTk.PhotoImage(img)
-                lbl = tk.Label(card, image=photo, bg=self.colors["bg_card"])
+                lbl = tk.Label(card, image=photo, bg=self.colors["card"])
                 lbl.image = photo
                 lbl.pack(pady=5)
         except:
             pass
 
-        tk.Label(card, text=product.name, bg=self.colors["bg_card"],
-                 fg=self.colors["text_main"], wraplength=140).pack()
+        tk.Label(card, text=product.name, bg=self.colors["card"],
+                 fg=self.colors["text"], wraplength=140).pack()
 
         tk.Label(card, text=f"{int(product.price):,} đ",
-                 fg=self.colors["accent"], bg=self.colors["bg_card"],
+                 fg=self.colors["primary"], bg=self.colors["card"],
                  font=("Arial", 10, "bold")).pack()
 
         tk.Button(
-            card, text="➕ Thêm",
-            bg=self.colors["accent"], fg="#000",
+            card,
+            text="➕ Thêm",
+            bg=self.colors["primary"],
+            fg="#000",
             relief="flat",
+            cursor="hand2",
             command=lambda: self.add_to_cart(product)
         ).pack(pady=6, ipadx=15)
 
@@ -262,21 +278,21 @@ class ConcessionSales:
             cost = float(p.price) * qty
             subtotal += cost
 
-            row = tk.Frame(self.cart_list_frame, bg=self.colors["bg_panel"])
+            row = tk.Frame(self.cart_list_frame, bg=self.colors["panel"])
             row.pack(fill=tk.X, pady=3)
 
-            tk.Label(row, text=p.name, bg=self.colors["bg_panel"],
-                     fg=self.colors["text_main"], width=18, anchor="w").pack(side=tk.LEFT)
-            tk.Label(row, text=f"x{qty}", bg=self.colors["bg_panel"],
-                     fg=self.colors["accent"]).pack(side=tk.LEFT)
+            tk.Label(row, text=p.name, bg=self.colors["panel"],
+                     fg=self.colors["text"], width=18, anchor="w").pack(side=tk.LEFT)
+            tk.Label(row, text=f"x{qty}", bg=self.colors["panel"],
+                     fg=self.colors["primary"]).pack(side=tk.LEFT)
 
             btn = tk.Label(row, text="✖", fg=self.colors["danger"],
-                           bg=self.colors["bg_panel"], cursor="hand2")
+                           bg=self.colors["panel"], cursor="hand2")
             btn.pack(side=tk.RIGHT)
             btn.bind("<Button-1>", lambda e, i=pid: self.remove_one(i))
 
             tk.Label(row, text=f"{int(cost):,}",
-                     bg=self.colors["bg_panel"], fg=self.colors["text_main"]).pack(side=tk.RIGHT)
+                     bg=self.colors["panel"], fg=self.colors["text"]).pack(side=tk.RIGHT)
 
         self.subtotal = subtotal
         discount_amt = subtotal * self.discount_percent
@@ -317,11 +333,14 @@ class ConcessionSales:
             if cus.tier:
                 self.discount_percent = float(cus.tier.discount_percent) / 100
                 self.lbl_cust_info.config(
-                    text=f"{cus.name} - {cus.tier.tier_name} (-{int(self.discount_percent*100)}%)",
+                    text=f"{cus.name} - {cus.tier.tier_name} (-{int(self.discount_percent * 100)}%)",
                     fg=self.colors["success"]
                 )
         else:
-            self.lbl_cust_info.config(text="Không tìm thấy khách hàng!", fg=self.colors["danger"])
+            self.lbl_cust_info.config(
+                text="Không tìm thấy khách hàng!",
+                fg=self.colors["danger"]
+            )
 
         self.update_cart_ui()
 
@@ -342,27 +361,19 @@ class ConcessionSales:
             if success:
                 messagebox.showinfo("Thành công", msg)
 
-                # --- ĐOẠN CODE MỚI ĐỂ IN HÓA ĐƠN ---
                 try:
-                    # 1. Lấy mã hóa đơn (msg trả về "Thanh toán thành công! Mã vé: 123")
                     import re
                     ticket_id = "UNKNOWN"
                     match = re.search(r"Mã vé:\s*(\d+)", msg)
-                    if match: ticket_id = match.group(1)
+                    if match:
+                        ticket_id = match.group(1)
 
-                    # 2. Tạo chuỗi món ăn (ngang, cách nhau dấu phẩy)
-                    items_str = []
-                    for pid, item in self.cart.items():
-                        items_str.append(f"{item['qty']}x {item['obj'].name}")
+                    items_str = [f"{i['qty']}x {i['obj'].name}" for i in self.cart.values()]
                     food_str = ", ".join(items_str)
 
-                    # 3. Lấy tên nhân viên
-                    # Mẹo: Dùng tạm TicketController để tra tên user
                     tc = TicketController()
                     seller_name = tc.get_user_name(self.user_id)
 
-                    # 4. Đóng gói dữ liệu in
-                    # QUAN TRỌNG: Không truyền 'movie_name' để máy in biết đây là hóa đơn lẻ
                     bill_data = {
                         "ticket_id": ticket_id,
                         "date": datetime.now().strftime("%d/%m/%Y"),
@@ -370,17 +381,15 @@ class ConcessionSales:
                         "price": int(self.final_total),
                         "seller": seller_name,
                         "food": food_str,
-                        "movie_name": None  # <--- Đánh dấu là không có phim
+                        "movie_name": None
                     }
 
-                    # 5. Gọi in
                     print_ticket_pdf(bill_data)
 
                 except Exception as e:
                     print(f"Lỗi in hóa đơn: {e}")
-                # -----------------------------------
 
-                self.cart = {}  # Reset
+                self.cart = {}
                 self.on_cust_type_change(None)
                 self.update_cart_ui()
             else:

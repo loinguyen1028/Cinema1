@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import ttk, messagebox
+from tkinter import ttk
 from controllers.customer_controller import CustomerController
 from views.customer_dialog import CustomerDialog
 
@@ -8,97 +8,115 @@ class AddCustomer:
     def __init__(self, parent_frame):
         self.parent = parent_frame
         self.controller = CustomerController()
+
+        # ===== MOVIE MANAGER THEME =====
+        self.colors = {
+            "bg": "#0f172a",
+            "panel": "#111827",
+            "card": "#1f2933",
+            "primary": "#facc15",
+            "text": "#e5e7eb",
+            "muted": "#9ca3af",
+            "selected": "#334155",
+            "edit": "#2563eb"
+        }
+
+        # ===== ACTION STATE =====
+        self.action_buttons = []
+        self.current_action_row = None
+
         self.render()
 
+    # =====================================================
     def render(self):
-        # ================= ROOT =================
-        content = tk.Frame(self.parent, bg="#121212")
-        content.pack(fill=tk.BOTH, expand=True, padx=25, pady=20)
+        for w in self.parent.winfo_children():
+            w.destroy()
+
+        # ================= CONTAINER =================
+        container = tk.Frame(self.parent, bg=self.colors["bg"])
+        container.pack(fill=tk.BOTH, expand=True, padx=30, pady=25)
 
         # ================= HEADER =================
-        header = tk.Frame(content, bg="#121212")
-        header.pack(fill=tk.X, pady=(0, 15))
+        header = tk.Frame(container, bg=self.colors["bg"])
+        header.pack(fill=tk.X, pady=(0, 18))
 
         tk.Label(
             header,
             text="👥 QUẢN LÝ KHÁCH HÀNG",
             font=("Arial", 18, "bold"),
-            fg="#f5c518",
-            bg="#121212"
+            fg=self.colors["primary"],
+            bg=self.colors["bg"]
         ).pack(side=tk.LEFT)
 
-        # ================= TOOLBAR =================
-        toolbar = tk.Frame(content, bg="#1a1a1a", padx=15, pady=10)
-        toolbar.pack(fill=tk.X, pady=(0, 15))
-
-        # --- Search ---
-        search_frame = tk.Frame(toolbar, bg="#1a1a1a")
-        search_frame.pack(side=tk.LEFT)
-
-        self.entry_search = tk.Entry(
-            search_frame,
-            width=38,
-            font=("Arial", 11),
-            relief="flat"
-        )
-        self.entry_search.pack(side=tk.LEFT, ipady=6)
-        self.entry_search.bind("<KeyRelease>", self.on_search)
-
-        tk.Label(
-            search_frame,
-            text="🔍 Tìm theo tên / SĐT",
-            font=("Arial", 10),
-            bg="#1a1a1a",
-            fg="#aaaaaa"
-        ).pack(side=tk.LEFT, padx=8)
-
-        # --- Add button ---
         tk.Button(
-            toolbar,
+            header,
             text="➕ Thêm khách hàng",
-            bg="#f5c518",
-            fg="black",
-            font=("Arial", 10, "bold"),
+            bg=self.colors["primary"],
+            fg="#000",
+            font=("Arial", 11, "bold"),
             relief="flat",
-            padx=18,
+            padx=16,
+            pady=6,
             cursor="hand2",
             command=lambda: self.open_dialog("add")
         ).pack(side=tk.RIGHT)
 
-        # ================= TABLE =================
-        table_frame = tk.Frame(content, bg="#1a1a1a")
-        table_frame.pack(fill=tk.BOTH, expand=True)
+        # ================= TOOLBAR =================
+        toolbar = tk.Frame(container, bg=self.colors["card"], padx=15, pady=12)
+        toolbar.pack(fill=tk.X, pady=(0, 15))
 
+        tk.Label(
+            toolbar,
+            text="🔍 Tìm theo tên / SĐT:",
+            font=("Arial", 11),
+            bg=self.colors["card"],
+            fg=self.colors["muted"]
+        ).pack(side=tk.LEFT)
+
+        self.entry_search = tk.Entry(toolbar, width=38, font=("Arial", 11), relief="flat")
+        self.entry_search.pack(side=tk.LEFT, padx=10, ipady=6)
+        self.entry_search.bind("<KeyRelease>", self.on_search)
+
+        # ================= CARD =================
+        card = tk.Frame(container, bg=self.colors["card"])
+        card.pack(fill=tk.BOTH, expand=True)
+
+        # ================= TABLE STYLE =================
         style = ttk.Style()
         style.theme_use("default")
 
         style.configure(
             "Treeview",
-            background="#1a1a1a",
-            foreground="white",
-            rowheight=36,
-            fieldbackground="#1a1a1a",
-            borderwidth=0,
-            font=("Arial", 11)
+            background=self.colors["panel"],
+            fieldbackground=self.colors["panel"],
+            foreground=self.colors["text"],
+            rowheight=44,
+            font=("Arial", 11),
+            borderwidth=0
         )
 
         style.configure(
             "Treeview.Heading",
-            background="#202020",
-            foreground="#f5c518",
+            background=self.colors["card"],
+            foreground=self.colors["primary"],
             font=("Arial", 11, "bold"),
             relief="flat"
         )
 
         style.map(
             "Treeview",
-            background=[("selected", "#f5c518")],
-            foreground=[("selected", "black")]
+            background=[("selected", self.colors["selected"])],
+            foreground=[("selected", "#ffffff")]
         )
 
-        columns = ("id", "name", "phone", "email", "dob", "points", "level", "created_at", "actions")
+        # ================= TABLE =================
+        columns = (
+            "id", "name", "phone", "email",
+            "dob", "points", "level", "created", "actions"
+        )
+
         self.tree = ttk.Treeview(
-            table_frame,
+            card,
             columns=columns,
             show="headings",
             selectmode="browse"
@@ -108,58 +126,107 @@ class AddCustomer:
             "ID", "Tên khách hàng", "SĐT", "Email",
             "Ngày sinh", "Điểm", "Hạng", "Ngày tạo", "Thao tác"
         ]
-        widths = [50, 180, 120, 220, 110, 70, 100, 120, 90]
+
+        widths = [60, 200, 130, 240, 120, 80, 120, 130, 100]
 
         for col, h, w in zip(columns, headers, widths):
             anchor = "center" if col in ("id", "points", "actions") else "w"
             self.tree.heading(col, text=h, anchor=anchor)
-            self.tree.column(col, width=w, anchor=anchor)
+            self.tree.column(col, width=w, anchor=anchor, stretch=(col != "actions"))
 
-        self.tree.pack(fill=tk.BOTH, expand=True)
-        self.tree.bind("<ButtonRelease-1>", self.on_action_click)
+        self.tree.column("actions", anchor="center", stretch=False)
+        self.tree.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
 
+        # ===== EVENTS =====
+        self.tree.bind("<<TreeviewSelect>>", self.show_action_buttons)
+        self.tree.bind("<Configure>", lambda e: self.hide_action_buttons())
+        self.tree.bind("<MouseWheel>", lambda e: self.hide_action_buttons())
+        self.tree.bind("<Button-1>", lambda e: self.hide_action_buttons())
+
+        self.create_action_buttons()
         self.load_data()
 
+    # =====================================================
     # ================= DATA =================
     def load_data(self):
+        self.hide_action_buttons()
         customers = self.controller.get_all()
         self.update_table(customers)
 
-    def on_search(self, event):
+    def on_search(self, event=None):
         keyword = self.entry_search.get().strip()
-        if keyword:
-            customers = self.controller.search(keyword)
-        else:
-            customers = self.controller.get_all()
+        customers = self.controller.search(keyword) if keyword else self.controller.get_all()
         self.update_table(customers)
 
     def update_table(self, customers):
-        for item in self.tree.get_children():
-            self.tree.delete(item)
+        self.tree.delete(*self.tree.get_children())
 
-        action_icons = "✏"
         for cus in customers:
-            extra = cus.extra_info if cus.extra_info else {}
-            dob = extra.get("dob", "")
-            points = extra.get("points", 0)
-            level = extra.get("level", "Thân thiết")
-
-            created = cus.created_at.strftime("%d/%m/%Y") if cus.created_at else ""
-
-            vals = (
-                cus.customer_id,
-                cus.name,
-                cus.phone,
-                cus.email,
-                dob,
-                points,
-                level,
-                created,
-                action_icons
+            extra = cus.extra_info or {}
+            self.tree.insert(
+                "",
+                tk.END,
+                iid=cus.customer_id,
+                values=(
+                    cus.customer_id,
+                    cus.name,
+                    cus.phone,
+                    cus.email,
+                    extra.get("dob", ""),
+                    extra.get("points", 0),
+                    extra.get("level", "Thân thiết"),
+                    cus.created_at.strftime("%d/%m/%Y") if cus.created_at else "",
+                    ""
+                )
             )
 
-            self.tree.insert("", tk.END, iid=cus.customer_id, values=vals)
+    # =====================================================
+    # ===== ACTION BUTTON SYSTEM (CHUẨN ROOM MANAGER) =====
+    def create_action_buttons(self):
+        base = {
+            "font": ("Arial", 11),
+            "bd": 0,
+            "relief": "flat",
+            "cursor": "hand2"
+        }
 
+        self.btn_edit = tk.Button(
+            self.tree,
+            text="✏",
+            bg=self.colors["edit"],
+            fg="white",
+            command=self.on_edit,
+            **base
+        )
+
+        self.action_buttons = [self.btn_edit]
+
+    def show_action_buttons(self, event=None):
+        selected = self.tree.selection()
+        if not selected:
+            return
+
+        item_id = selected[0]
+        self.current_action_row = item_id
+
+        bbox = self.tree.bbox(item_id, "#9")
+        if not bbox:
+            return
+
+        x, y, width, height = bbox
+
+        self.btn_edit.place(
+            x=x + 8,
+            y=y + 5,
+            width=width - 16,
+            height=height - 10
+        )
+
+    def hide_action_buttons(self):
+        for btn in self.action_buttons:
+            btn.place_forget()
+
+    # =====================================================
     # ================= ACTION =================
     def open_dialog(self, mode, customer_id=None):
         CustomerDialog(
@@ -170,15 +237,6 @@ class AddCustomer:
             on_success=self.load_data
         )
 
-    def on_action_click(self, event):
-        region = self.tree.identify("region", event.x, event.y)
-        if region != "cell":
-            return
-
-        column = self.tree.identify_column(event.x)
-        if column == "#9":
-            item_id = self.tree.identify_row(event.y)
-            if not item_id:
-                return
-
-            self.open_dialog("edit", item_id)
+    def on_edit(self):
+        if self.current_action_row:
+            self.open_dialog("edit", self.current_action_row)

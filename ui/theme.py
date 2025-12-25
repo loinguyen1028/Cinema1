@@ -1,38 +1,79 @@
+# theme.py
+import tkinter as tk
 from tkinter import ttk
 
-class AppTheme:
-    BG = "#f4f6f9"
-    CARD = "#ffffff"
-    PRIMARY = "#3f51b5"
-    SECONDARY = "#5c6bc0"
-    TEXT = "#333"
-    MUTED = "#777"
-    BORDER = "#e0e0e0"
 
-    @staticmethod
-    def apply(root):
-        style = ttk.Style(root)
-        style.theme_use("default")
+# ==================================================
+# MOVIE MANAGER THEME (GLOBAL)
+# ==================================================
+COLORS = {
+    "bg": "#0f172a",        # nền chính
+    "panel": "#111827",     # sidebar / panel
+    "card": "#1f2933",      # card / container
+    "primary": "#facc15",   # màu nhấn (vàng)
+    "text": "#e5e7eb",      # chữ chính
+    "muted": "#9ca3af",     # chữ phụ
+    "btn": "#2563eb",       # nút xanh
+    "danger": "#dc2626",    # xóa / lỗi
+    "success": "#22c55e",   # thành công
+    "selected": "#334155"   # dòng được chọn
+}
 
-        # Treeview
-        style.configure(
-            "Treeview",
-            background="white",
-            foreground=AppTheme.TEXT,
-            rowheight=36,
-            fieldbackground="white",
-            borderwidth=0
-        )
 
-        style.configure(
-            "Treeview.Heading",
-            font=("Arial", 10, "bold"),
-            background="#f0f0f0",
-            foreground=AppTheme.TEXT
-        )
+# ==================================================
+# APPLY GLOBAL TTK STYLE
+# ==================================================
+def apply_ttk_theme():
+    style = ttk.Style()
+    style.theme_use("default")
 
-        style.map(
-            "Treeview",
-            background=[("selected", "#c5cae9")],
-            foreground=[("selected", "#000")]
-        )
+    style.configure(
+        "Treeview",
+        background=COLORS["panel"],
+        fieldbackground=COLORS["panel"],
+        foreground=COLORS["text"],
+        rowheight=44,
+        font=("Arial", 11),
+        borderwidth=0
+    )
+
+    style.configure(
+        "Treeview.Heading",
+        background=COLORS["card"],
+        foreground=COLORS["primary"],
+        font=("Arial", 11, "bold"),
+        relief="flat"
+    )
+
+    style.map(
+        "Treeview",
+        background=[("selected", COLORS["selected"])],
+        foreground=[("selected", "#ffffff")]
+    )
+
+    return style
+
+
+# ==================================================
+# COMMON BUTTON STYLES
+# ==================================================
+BTN_PRIMARY = {
+    "bg": COLORS["primary"],
+    "fg": "#000",
+    "relief": "flat",
+    "cursor": "hand2"
+}
+
+BTN_BLUE = {
+    "bg": COLORS["btn"],
+    "fg": "white",
+    "relief": "flat",
+    "cursor": "hand2"
+}
+
+BTN_DANGER = {
+    "bg": COLORS["danger"],
+    "fg": "white",
+    "relief": "flat",
+    "cursor": "hand2"
+}
