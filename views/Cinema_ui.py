@@ -1,5 +1,6 @@
 import tkinter as tk
 from tkinter import messagebox
+
 from views.movie_manager import MovieManager
 from views.showtime_manager import ShowtimeManager
 from views.staff_manager import StaffManager
@@ -7,41 +8,53 @@ from views.customer_manager import CustomerManager
 from views.room_manager import RoomManager
 from views.change_password_dialog import ChangePasswordDialog
 from views.product_manager import ProductManager
-from  views.tier_manager import TierManager
+from views.tier_manager import TierManager
 from views.stat_manager import StatManager
 
+
+# ================== THEME CHUẨN (DÙNG CHUNG STAFF + ADMIN) ==================
+THEME = {
+    "bg": "#0f172a",        # nền chính
+    "panel": "#111827",     # sidebar / header
+    "card": "#1f2933",      # card
+    "primary": "#facc15",   # màu nhấn
+    "text": "#e5e7eb",      # chữ chính
+    "muted": "#9ca3af",     # chữ phụ
+    "hover": "#0f172a",     # hover sidebar
+    "border": "#374151"
+}
+
+
 class CinemaApp:
-    # --- SỬA DÒNG NÀY: Thêm tham số user_id ---
     def __init__(self, root, user_id=None, on_logout=None):
         self.root = root
-        self.user_id = user_id  # <--- Lưu lại user_id để dùng sau này
+        self.user_id = user_id
         self.on_logout = on_logout
+        self.colors = THEME
+        self.active_page = None
 
         self.root.title("LHQ Cinema - Admin")
         self.root.geometry("1300x750")
 
-        self.colors = {
-            "sidebar_bg": "#0b0b0b",  # Đen sâu
-            "content_bg": "#121212",  # Đen xám nhẹ
-            "text_white": "#ffffff",
-            "active_orange": "#f5c518",  # Vàng cinema (IMDb gold)
-            "header_bg": "#0b0b0b",
-            "hover_bg": "#1f1f1f",  # Hover sidebar
-            "muted_text": "#b0b0b0"
-        }
-
-        self.sidebar_frame = tk.Frame(root, bg=self.colors["sidebar_bg"], width=250)
+        # ================= SIDEBAR =================
+        self.sidebar_frame = tk.Frame(
+            root,
+            bg=self.colors["panel"],
+            width=250
+        )
         self.sidebar_frame.pack(side=tk.LEFT, fill=tk.Y)
         self.sidebar_frame.pack_propagate(False)
 
-        self.main_area = tk.Frame(root, bg=self.colors["content_bg"])
+        # ================= MAIN AREA =================
+        self.main_area = tk.Frame(root, bg=self.colors["bg"])
         self.main_area.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
         self.create_header()
 
-        self.body_frame = tk.Frame(self.main_area, bg=self.colors["content_bg"])
+        self.body_frame = tk.Frame(self.main_area, bg=self.colors["bg"])
         self.body_frame.pack(fill=tk.BOTH, expand=True)
 
+        # ================= MENU DATA =================
         self.menu_data = [
             ("Quản lí phim", "🎬"),
             ("Quản lí suất chiếu", "🎞"),
@@ -49,7 +62,7 @@ class CinemaApp:
             ("Quản lí sản phẩm", "🥤"),
             ("Quản lí nhân sự", "👥"),
             ("Quản lí khách hàng", "👨‍👩‍👧"),
-            ("Quản lí hạng", "👨‍👩‍👧"),
+            ("Quản lí hạng", "⭐"),
             ("Thống kê", "📊"),
         ]
 
@@ -57,38 +70,44 @@ class CinemaApp:
         self.create_sidebar()
         self.switch_page("Quản lí phim")
 
+    # ================= HEADER =================
     def create_header(self):
-        header = tk.Frame(self.main_area, bg=self.colors["header_bg"], height=60)
+        header = tk.Frame(self.main_area, bg=self.colors["panel"], height=60)
         header.pack(fill=tk.X, side=tk.TOP)
 
-        user_frame = tk.Frame(header, bg=self.colors["header_bg"])
+        user_frame = tk.Frame(header, bg=self.colors["panel"])
         user_frame.pack(side=tk.RIGHT, padx=20, pady=10)
 
         tk.Label(
             user_frame,
             text="👤",
             font=("Arial", 16),
-            bg="#1c1c1c",
-            fg=self.colors["active_orange"],
+            bg=self.colors["card"],
+            fg=self.colors["primary"],
             width=2
         ).pack(side=tk.LEFT, padx=10)
 
         tk.Label(
             user_frame,
             text="Admin",
-            bg=self.colors["header_bg"],
-            fg=self.colors["muted_text"],
+            bg=self.colors["panel"],
+            fg=self.colors["muted"],
             font=("Arial", 10, "bold")
         ).pack(side=tk.LEFT, padx=5)
 
-        lbl_more = tk.Label(user_frame, text="⋮", bg=self.colors["header_bg"], fg="white",
-                            font=("Arial", 14, "bold"), cursor="hand2")
+        lbl_more = tk.Label(
+            user_frame,
+            text="⋮",
+            bg=self.colors["panel"],
+            fg=self.colors["text"],
+            font=("Arial", 14, "bold"),
+            cursor="hand2"
+        )
         lbl_more.pack(side=tk.LEFT, padx=5)
         lbl_more.bind("<Button-1>", self.show_admin_menu)
 
     def show_admin_menu(self, event):
         menu = tk.Menu(self.root, tearoff=0)
-        # Gán lệnh mở dialog đổi mật khẩu
         menu.add_command(label="Đổi mật khẩu", command=self.open_change_pass)
         menu.add_separator()
         menu.add_command(label="Đăng xuất", command=self.on_logout, foreground="red")
@@ -97,50 +116,79 @@ class CinemaApp:
         finally:
             menu.grab_release()
 
-    # --- HÀM MỚI: MỞ DIALOG ĐỔI MẬT KHẨU ---
     def open_change_pass(self):
         if self.user_id:
-            # Truyền user_id vào dialog
             ChangePasswordDialog(self.root, self.user_id)
         else:
-            messagebox.showerror("Lỗi", "Không xác định được tài khoản người dùng!")
+            messagebox.showerror("Lỗi", "Không xác định được tài khoản!")
 
+    # ================= SIDEBAR =================
     def create_sidebar(self):
-
-        logo_frame = tk.Frame(self.sidebar_frame, bg=self.colors["sidebar_bg"], height=80)
+        logo_frame = tk.Frame(self.sidebar_frame, bg=self.colors["panel"], height=80)
         logo_frame.pack(fill=tk.X, pady=20)
-        tk.Label(logo_frame, text="🎬", font=("Arial", 30), bg=self.colors["sidebar_bg"], fg="#5c9aff").pack(
-            side=tk.LEFT, padx=(20, 5))
-        tk.Label(logo_frame, text="LHQ\nCinema", font=("Arial", 16, "bold"), bg=self.colors["sidebar_bg"], fg="white",
-                 justify=tk.LEFT).pack(side=tk.LEFT)
+
+        tk.Label(
+            logo_frame,
+            text="🎬",
+            font=("Arial", 30),
+            bg=self.colors["panel"],
+            fg=self.colors["primary"]
+        ).pack(side=tk.LEFT, padx=(20, 5))
+
+        tk.Label(
+            logo_frame,
+            text="LHQ\nCinema",
+            font=("Arial", 16, "bold"),
+            bg=self.colors["panel"],
+            fg=self.colors["text"],
+            justify=tk.LEFT
+        ).pack(side=tk.LEFT)
+
+        def on_enter(frame):
+            frame.config(bg=self.colors["hover"])
+
+        def on_leave(frame, name):
+            if self.active_page != name:
+                frame.config(bg=self.colors["panel"])
 
         for name, icon in self.menu_data:
-            btn_frame = tk.Frame(self.sidebar_frame, bg=self.colors["sidebar_bg"], cursor="hand2")
+            btn_frame = tk.Frame(
+                self.sidebar_frame,
+                bg=self.colors["panel"],
+                cursor="hand2"
+            )
             btn_frame.pack(fill=tk.X, pady=5, padx=10)
 
-            def on_enter(e, frame=btn_frame):
-                frame.config(bg=self.colors["hover_bg"])
-
-            def on_leave(e, frame=btn_frame):
-                frame.config(bg=self.colors["sidebar_bg"])
-
-            btn_frame.bind("<Enter>", on_enter)
-            btn_frame.bind("<Leave>", on_leave)
-
-            lbl_icon = tk.Label(btn_frame, text=icon, bg=self.colors["sidebar_bg"], fg="white", font=("Arial", 14))
+            lbl_icon = tk.Label(
+                btn_frame,
+                text=icon,
+                bg=self.colors["panel"],
+                fg=self.colors["text"],
+                font=("Arial", 14)
+            )
             lbl_icon.pack(side=tk.LEFT, padx=(10, 10), pady=10)
-            lbl_text = tk.Label(btn_frame, text=name, bg=self.colors["sidebar_bg"], fg="white",
-                                font=("Arial", 11, "bold"))
+
+            lbl_text = tk.Label(
+                btn_frame,
+                text=name,
+                bg=self.colors["panel"],
+                fg=self.colors["text"],
+                font=("Arial", 11, "bold")
+            )
             lbl_text.pack(side=tk.LEFT, pady=10)
 
             self.menu_buttons[name] = (btn_frame, lbl_icon, lbl_text)
-            btn_frame.bind("<Button-1>", lambda e, n=name: self.switch_page(n))
-            lbl_icon.bind("<Button-1>", lambda e, n=name: self.switch_page(n))
-            lbl_text.bind("<Button-1>", lambda e, n=name: self.switch_page(n))
 
+            for w in (btn_frame, lbl_icon, lbl_text):
+                w.bind("<Button-1>", lambda e, n=name: self.switch_page(n))
+
+            btn_frame.bind("<Enter>", lambda e, f=btn_frame: on_enter(f))
+            btn_frame.bind("<Leave>", lambda e, f=btn_frame, n=name: on_leave(f, n))
+
+    # ================= PAGE SWITCH =================
     def switch_page(self, page_name):
-        # (Giữ nguyên code cũ của bạn)
         self.update_sidebar_visuals(page_name)
+
         for widget in self.body_frame.winfo_children():
             widget.destroy()
 
@@ -164,18 +212,23 @@ class CinemaApp:
             self.render_empty_page(page_name)
 
     def update_sidebar_visuals(self, active_page):
+        self.active_page = active_page
+
         for name, (frame, icon, text) in self.menu_buttons.items():
             if name == active_page:
-                frame.config(bg="#1f1f1f")
-                icon.config(fg=self.colors["active_orange"])
-                text.config(fg=self.colors["active_orange"])
+                frame.config(bg=self.colors["hover"])
+                icon.config(fg=self.colors["primary"])
+                text.config(fg=self.colors["primary"])
             else:
-                frame.config(bg=self.colors["sidebar_bg"])
-                icon.config(fg=self.colors["text_white"])
-                text.config(fg=self.colors["text_white"])
+                frame.config(bg=self.colors["panel"])
+                icon.config(fg=self.colors["text"])
+                text.config(fg=self.colors["text"])
 
     def render_empty_page(self, title):
-        tk.Label(self.body_frame, text=f"Giao diện: {title}", font=("Arial", 20, "bold"),
-                 bg=self.colors["content_bg"], fg="#333").pack(expand=True)
-        tk.Label(self.body_frame, text="(Chức năng đang phát triển)", font=("Arial", 12),
-                 bg=self.colors["content_bg"], fg="#666").pack(expand=True)
+        tk.Label(
+            self.body_frame,
+            text=title,
+            font=("Arial", 20, "bold"),
+            bg=self.colors["bg"],
+            fg=self.colors["muted"]
+        ).pack(expand=True)

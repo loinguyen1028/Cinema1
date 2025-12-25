@@ -11,6 +11,9 @@ except ImportError:
 
 
 class MovieDialog(tk.Toplevel):
+    POSTER_EMPTY_SIZE = (120, 160)
+    POSTER_FULL_SIZE = (180, 240)
+
     def __init__(self, parent, controller, mode="add", movie_id=None, on_success=None):
         super().__init__(parent)
         self.controller = controller
@@ -18,7 +21,6 @@ class MovieDialog(tk.Toplevel):
         self.movie_id = movie_id
         self.on_success = on_success
 
-        # ===== STAFF COLORS =====
         self.colors = {
             "bg": "#0f172a",
             "panel": "#111827",
@@ -36,6 +38,7 @@ class MovieDialog(tk.Toplevel):
         self.config(bg=self.colors["bg"])
         self.grab_set()
 
+        self.poster_img = None
         self.current_poster_path = ""
         self.movie_data = self.load_initial_data()
         self.render_ui()
@@ -75,7 +78,7 @@ class MovieDialog(tk.Toplevel):
             fg=self.colors["primary"]
         ).pack(anchor="w", pady=(0, 20))
 
-        # ===== ROW 1 =====
+        # ROW 1
         row1 = tk.Frame(container, bg=self.colors["bg"])
         row1.pack(fill=tk.X)
 
@@ -91,7 +94,7 @@ class MovieDialog(tk.Toplevel):
 
         self.lb_genre = self.create_genre_box(row1)
 
-        # ===== ROW 2 =====
+        # ROW 2
         row2 = tk.Frame(container, bg=self.colors["bg"])
         row2.pack(fill=tk.X, pady=10)
 
@@ -100,7 +103,7 @@ class MovieDialog(tk.Toplevel):
         self.cbo_country = self.create_combo(row2, "Quốc gia", self.movie_data["country"],
                                              ["Việt Nam", "Mỹ", "Hàn Quốc", "Thái Lan"], width=18)
 
-        # ===== ROW 3 =====
+        # ROW 3
         row3 = tk.Frame(container, bg=self.colors["bg"])
         row3.pack(fill=tk.X, pady=10)
 
@@ -111,12 +114,11 @@ class MovieDialog(tk.Toplevel):
         self.cbo_age = self.create_combo(row3, "Giới hạn tuổi", self.movie_data["age"],
                                          ["P", "13", "16", "18"], width=15)
 
-        # ===== ROW 4 =====
+        # ROW 4
         row4 = tk.Frame(container, bg=self.colors["bg"])
         row4.pack(fill=tk.BOTH, expand=True, pady=10)
 
         self.txt_desc = self.create_textarea(row4, "Mô tả", self.movie_data["desc"])
-
         self.create_poster_panel(row4)
 
     # =====================================================
@@ -124,11 +126,8 @@ class MovieDialog(tk.Toplevel):
         f = tk.Frame(parent, bg=self.colors["bg"])
         f.pack(side=tk.LEFT, fill=tk.X, expand=expand, padx=5)
         tk.Label(f, text=label, fg=self.colors["muted"], bg=self.colors["bg"], font=("Arial", 9)).pack(anchor="w")
-        e = tk.Entry(
-            f, font=("Arial", 11),
-            bg=self.colors["input"], fg=self.colors["text"],
-            insertbackground="white", relief="flat", width=width
-        )
+        e = tk.Entry(f, font=("Arial", 11), bg=self.colors["input"], fg=self.colors["text"],
+                     insertbackground="white", relief="flat", width=width)
         e.insert(0, value)
         e.pack(fill=tk.X, ipady=6, pady=4)
         return e
@@ -139,18 +138,15 @@ class MovieDialog(tk.Toplevel):
         tk.Label(f, text=label, fg=self.colors["muted"], bg=self.colors["bg"], font=("Arial", 9)).pack(anchor="w")
         c = ttk.Combobox(f, values=values, font=("Arial", 11), width=width, state="readonly")
         c.set(value)
-        c.pack(fill=tk.X, ipady=5, pady=4)
+        c.pack(fill=tk.X, pady=4)
         return c
 
     def create_textarea(self, parent, label, value):
         f = tk.Frame(parent, bg=self.colors["bg"])
         f.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         tk.Label(f, text=label, fg=self.colors["muted"], bg=self.colors["bg"], font=("Arial", 9)).pack(anchor="w")
-        txt = tk.Text(
-            f, font=("Arial", 11),
-            bg=self.colors["input"], fg=self.colors["text"],
-            insertbackground="white", height=8, relief="flat"
-        )
+        txt = tk.Text(f, font=("Arial", 11), bg=self.colors["input"],
+                      fg=self.colors["text"], insertbackground="white", height=8, relief="flat")
         txt.insert("1.0", value)
         txt.pack(fill=tk.BOTH, expand=True, pady=4)
         return txt
@@ -159,11 +155,9 @@ class MovieDialog(tk.Toplevel):
         f = tk.Frame(parent, bg=self.colors["bg"], width=220)
         f.pack(side=tk.RIGHT, padx=10)
         tk.Label(f, text="Thể loại", fg=self.colors["muted"], bg=self.colors["bg"], font=("Arial", 9)).pack(anchor="w")
-        lb = tk.Listbox(
-            f, selectmode=tk.MULTIPLE, height=5,
-            bg=self.colors["input"], fg=self.colors["text"],
-            selectbackground=self.colors["btn"], relief="flat"
-        )
+        lb = tk.Listbox(f, selectmode=tk.MULTIPLE, height=5,
+                        bg=self.colors["input"], fg=self.colors["text"],
+                        selectbackground=self.colors["btn"], relief="flat")
         genres = ["Hành động", "Kinh dị", "Tình cảm", "Hài", "Hoạt hình", "Viễn tưởng", "Tâm lý", "Gia đình"]
         for g in genres:
             lb.insert(tk.END, g)
@@ -174,14 +168,22 @@ class MovieDialog(tk.Toplevel):
 
     # =====================================================
     def create_poster_panel(self, parent):
-        right = tk.Frame(parent, bg=self.colors["bg"], width=200)
+        right = tk.Frame(parent, bg=self.colors["bg"], width=220)
         right.pack(side=tk.RIGHT, fill=tk.Y, padx=15)
 
+        self.poster_border = tk.Frame(right, bg=self.colors["primary"], padx=2, pady=2)
+        self.poster_border.pack(pady=10)
+
         self.lbl_poster = tk.Label(
-            right, bg=self.colors["panel"], text="[ POSTER ]",
-            fg=self.colors["muted"], width=15, height=9
+            self.poster_border,
+            bg=self.colors["panel"],
+            fg=self.colors["muted"],
+            font=("Arial", 10, "bold"),
+            text="NO POSTER",
+            width=15,
+            height=9
         )
-        self.lbl_poster.pack(pady=10)
+        self.lbl_poster.pack()
 
         tk.Button(
             right, text="📂 Chọn ảnh",
@@ -198,6 +200,27 @@ class MovieDialog(tk.Toplevel):
 
         if self.current_poster_path:
             self.load_image_to_label(self.current_poster_path)
+
+    # =====================================================
+    def load_image_to_label(self, path):
+        if not os.path.exists(path):
+            return
+
+        img = Image.open(path).resize(self.POSTER_FULL_SIZE, Image.Resampling.LANCZOS)
+        self.poster_img = ImageTk.PhotoImage(img)
+
+        self.lbl_poster.config(
+            image=self.poster_img,
+            text="",
+            width=self.POSTER_FULL_SIZE[0],
+            height=self.POSTER_FULL_SIZE[1]
+        )
+
+    def choose_image(self):
+        path = filedialog.askopenfilename(filetypes=[("Image", "*.jpg *.png")])
+        if path:
+            self.current_poster_path = path
+            self.load_image_to_label(path)
 
     # =====================================================
     def auto_fill_data(self):
@@ -222,19 +245,6 @@ class MovieDialog(tk.Toplevel):
         messagebox.showinfo("Thành công", f"Đã tải dữ liệu phim: {info.get('title')}")
 
     # =====================================================
-    def load_image_to_label(self, path):
-        if not os.path.exists(path):
-            return
-        img = Image.open(path).resize((120, 160), Image.Resampling.LANCZOS)
-        self.poster_img = ImageTk.PhotoImage(img)
-        self.lbl_poster.config(image=self.poster_img, text="")
-
-    def choose_image(self):
-        path = filedialog.askopenfilename(filetypes=[("Image", "*.jpg *.png")])
-        if path:
-            self.current_poster_path = path
-            self.load_image_to_label(path)
-
     def save_action(self):
         genres = ", ".join(self.lb_genre.get(i) for i in self.lb_genre.curselection())
         success, msg = self.controller.save(
