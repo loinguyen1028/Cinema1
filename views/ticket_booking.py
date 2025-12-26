@@ -238,6 +238,25 @@ class TicketBooking:
 
 
     def create_movie_card(self, movie, showtimes):
+        now = datetime.now()
+        is_today = self.current_date == now.strftime("%d/%m/%Y")
+
+        valid_showtimes = []
+        for st in showtimes:
+            st_time = st.start_time
+            if isinstance(st_time, datetime):
+                st_time = st_time.time()
+
+            if is_today and st_time < now.time():
+                continue
+
+            valid_showtimes.append(st)
+
+        if not valid_showtimes:
+            return
+
+        showtimes = valid_showtimes
+
         card = tk.Frame(
             self.scrollable_frame,
             bg=self.colors["card"],
