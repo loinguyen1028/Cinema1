@@ -33,6 +33,7 @@ class MovieManager:
         container = tk.Frame(self.parent, bg=self.colors["bg"])
         container.pack(fill=tk.BOTH, expand=True, padx=30, pady=25)
 
+        # ===== HEADER =====
         header = tk.Frame(container, bg=self.colors["bg"])
         header.pack(fill=tk.X, pady=(0, 18))
 
@@ -57,6 +58,53 @@ class MovieManager:
             command=lambda: self.open_dialog("add")
         ).pack(side=tk.RIGHT)
 
+        # ===== SEARCH BAR =====
+        toolbar = tk.Frame(container, bg=self.colors["bg"])
+        toolbar.pack(fill=tk.X, pady=(0, 12))
+
+        search_frame = tk.Frame(
+            toolbar,
+            bg=self.colors["panel"],
+            highlightbackground=self.colors["primary"],
+            highlightthickness=1
+        )
+        search_frame.pack(side=tk.LEFT)
+
+        self.entry_search = tk.Entry(
+            search_frame,
+            width=40,
+            font=("Arial", 11),
+            bg=self.colors["panel"],
+            fg=self.colors["muted"],
+            insertbackground=self.colors["primary"],
+            relief="flat"
+        )
+        self.entry_search.pack(side=tk.LEFT, ipady=7, padx=(8, 4))
+        self.entry_search.insert(0, "Tìm kiếm phim...")
+        self.entry_search.bind("<KeyRelease>", self.on_search)
+
+        def clear_ph(e):
+            if self.entry_search.get() == "Tìm kiếm phim...":
+                self.entry_search.delete(0, tk.END)
+                self.entry_search.config(fg=self.colors["text"])
+
+        def restore_ph(e):
+            if not self.entry_search.get():
+                self.entry_search.insert(0, "Tìm kiếm phim...")
+                self.entry_search.config(fg=self.colors["muted"])
+
+        self.entry_search.bind("<FocusIn>", clear_ph)
+        self.entry_search.bind("<FocusOut>", restore_ph)
+
+        tk.Label(
+            search_frame,
+            text="🔍",
+            bg=self.colors["panel"],
+            fg=self.colors["primary"],
+            font=("Arial", 12)
+        ).pack(side=tk.LEFT, padx=(0, 8))
+
+        # ===== TABLE CARD =====
         card = tk.Frame(container, bg=self.colors["card"])
         card.pack(fill=tk.BOTH, expand=True)
 
@@ -104,7 +152,6 @@ class MovieManager:
             self.tree.column(col, width=w, anchor=anchor, stretch=(col != "actions"))
 
         self.tree.column("actions", anchor="center", stretch=False)
-
         self.tree.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
 
         self.tree.bind("<<TreeviewSelect>>", self.show_action_buttons)
@@ -115,11 +162,13 @@ class MovieManager:
         self.create_action_buttons()
         self.load_data()
 
-    def load_data(self):
+    # ===== LOAD DATA =====
+    def load_data(self, movies=None):
         self.hide_action_buttons()
         self.tree.delete(*self.tree.get_children())
 
-        movies = self.controller.get_all()
+        if movies is None:
+            movies = self.controller.get_all()
 
         for m in movies:
             extra = m.extra_info or {}
@@ -138,6 +187,22 @@ class MovieManager:
                 )
             )
 
+    # ===== SEARCH =====
+    def on_search(self, event=None):
+        keyword = self.entry_search.get().strip()
+
+        if keyword == "Tìm kiếm phim...":
+            keyword = ""
+
+        movies = (
+            self.controller.search(keyword)
+            if keyword
+            else self.controller.get_all()
+        )
+
+        self.load_data(movies)
+
+    # ===== ACTION BUTTONS =====
     def create_action_buttons(self):
         base = {
             "font": ("Arial", 11),
@@ -188,6 +253,7 @@ class MovieManager:
         for btn in self.action_buttons:
             btn.place_forget()
 
+    # ===== ACTIONS =====
     def on_view(self):
         if self.current_action_row:
             MovieDetail(self.parent, self.controller, self.current_action_row)
